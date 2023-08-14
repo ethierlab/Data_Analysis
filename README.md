@@ -4,7 +4,6 @@
 
 - [Installation](#installation)
 - [Usage](#usage)
-- [Contribution](#contribution)
 - [Notebooks](#notebooks)
 
 
