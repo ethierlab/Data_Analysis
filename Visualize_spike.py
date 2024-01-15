@@ -6,6 +6,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import csv
 import numpy as np
 folder_path = 'C:/Users/Vincent/Documents/GitHub/Data_Analysis/test.csv'
+folder_path = '/Users/vincent/Desktop/data Michael/Spike_bins/spikes_bin_1.csv'
 # C:\Users\Vincent\Documents\GitHub\Data_Analysis\spikes# Replace with your folder path
 # csv_files = [file for file in os.listdir(folder_path) if file.endswith('.csv')]
 
@@ -16,7 +17,7 @@ folder_path = 'C:/Users/Vincent/Documents/GitHub/Data_Analysis/test.csv'
 #     data_list.append(data.tolist())
 
 # print(data_list)
-
+ 
 # reshaped_data = np.array(data_list).reshape(-1, 1)
 def csv_to_numpy(file_path):
     data_list = []
@@ -29,20 +30,47 @@ def csv_to_numpy(file_path):
     return numpy_array
 
 array = csv_to_numpy(folder_path)
-pca = PCA(n_components=3)
-data_transformed = pca.fit_transform(array)
+view = input("voulez vous voir les donnees ?")
+if view == "oui":
+    neurone= input("quel est le neuronne voulu ?")
+    print(array[1:,int(neurone)])
+    print(array[0])
+    x = np.linspace(0, len(array)-1, len(array)-1)  
+    array = array[1:,int(neurone)]
+    plt.plot(x ,array)
+    plt.show() 
 
+if view == "non":
+    reduction_type = input("quel type de reduction voulez vous ?")
 
+if reduction_type == "pca":
+    pca = PCA(n_components=3)
+    data_transformed = pca.fit_transform(array)
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.scatter(data_transformed[:, 0], data_transformed[:, 1], data_transformed[:, 2])
 
-fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
-ax.scatter(data_transformed[:, 0], data_transformed[:, 1], data_transformed[:, 2])
+    ax.set_xlabel('PC1')
+    ax.set_ylabel('PC2')
+    ax.set_zlabel('PC3')
+    plt.title('Visualisation 3D avec PCA')
+    plt.show()
 
-ax.set_xlabel('PC1')
-ax.set_ylabel('PC2')
-ax.set_zlabel('PC3')
-plt.title('Visualisation 3D avec PCA')
-plt.show()
+if reduction_type == 'UMAP':
+    import umap
+    reducer = umap.UMAP(n_components=3)
+    embedding = reducer.fit_transform(array)
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.scatter(embedding[:, 0], embedding[:, 1], embedding[:, 2])
+
+    ax.set_xlabel('PC1')
+    ax.set_ylabel('PC2')
+    ax.set_zlabel('PC3')
+    plt.title('Visualisation 3D avec UMAP')
+    plt.show()
+# oui
+    
 # # Select 3 dimensions from the data_list
 # selected_dimensions = [data_list[i] for i in [0, 2, 4]]  # Replace [0, 2, 4] with the indices of the desired dimensions
 
