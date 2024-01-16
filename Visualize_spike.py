@@ -5,6 +5,7 @@ from sklearn.decomposition import PCA
 from mpl_toolkits.mplot3d import Axes3D
 import csv
 import numpy as np
+import umap
 folder_path = 'C:/Users/Vincent/Documents/GitHub/Data_Analysis/test.csv'
 folder_path = '/Users/vincent/Desktop/data Michael/Spike_bins/spikes_bin_1.csv'
 # C:\Users\Vincent\Documents\GitHub\Data_Analysis\spikes# Replace with your folder path
@@ -23,27 +24,43 @@ def csv_to_numpy(file_path):
     data_list = []
     with open(file_path, 'r') as file:
         csv_reader = csv.reader(file)
+        header = next(csv_reader)
         for row in csv_reader:
             data_list.append(row)
     
-    numpy_array = np.array(data_list)
-    return numpy_array
+    # Transpose the list of rows to get a list of columns
+    transposed_data = list(zip(*data_list))
+
+    # Convert each column to a separate NumPy array
+    numpy_arrays = []
+    for column in transposed_data:
+        try:
+            float_column = np.array(column, dtype=float)
+            numpy_arrays.append(float_column)
+
+        except ValueError:
+            
+            numpy_arrays.append(np.array(column))
+
+    return numpy_arrays
 
 array = csv_to_numpy(folder_path)
-view = input("voulez vous voir les donnees ?")
-if view == "oui":
+action = input("voulez vous voir un seul neuronne ?")
+
+if action == "oui":
     neurone= input("quel est le neuronne voulu ?")
-    print(array[1:,int(neurone)])
-    print(array[0])
-    x = np.linspace(0, len(array)-1, len(array)-1)  
-    array = array[1:,int(neurone)]
-    plt.plot(x ,array)
-    plt.show() 
+    
+    selected_row = np.array(array[int(neurone)-1][1:], dtype=float)
 
-if view == "non":
-    reduction_type = input("quel type de reduction voulez vous ?")
+    x = np.arange(len(selected_row))
+    plt.plot(x, selected_row)
+    plt.show()
 
-if reduction_type == "pca":
+action = input("voulez vous voir la visualisation 3D ?")
+if action == "oui":
+    reduction_type = input("quel type de reduction voulez vous (pca/UMAP?")
+
+if reduction_type == "pca" or reduction_type == "PCA":
     pca = PCA(n_components=3)
     data_transformed = pca.fit_transform(array)
     fig = plt.figure()
@@ -56,8 +73,8 @@ if reduction_type == "pca":
     plt.title('Visualisation 3D avec PCA')
     plt.show()
 
-if reduction_type == 'UMAP':
-    import umap
+if reduction_type == 'UMAP' or reduction_type == 'umap':
+    
     reducer = umap.UMAP(n_components=3)
     embedding = reducer.fit_transform(array)
     fig = plt.figure()
