@@ -18,7 +18,7 @@ folder_path = '/Users/vincent/Desktop/data Michael/Spike_bins/spikes_bin_1.csv'
 #     data_list.append(data.tolist())
 
 # print(data_list)
- 
+
 # reshaped_data = np.array(data_list).reshape(-1, 1)
 def csv_to_numpy(file_path):
     data_list = []

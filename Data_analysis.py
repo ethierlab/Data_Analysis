@@ -27,6 +27,14 @@ def generate_PSTH_data(sample, t_inf, t_supp):
     - 'Lower std': A numpy array representing the lower standard deviation values, calculated using the PSTH function.
     - 'Average': A numpy array representing the average values, calculated using the PSTH function.
     - 'Higher std': A numpy array representing the higher standard deviation values, calculated using the PSTH function.
+
+    Example:
+        sample_data = [1.0, 2.5, 3.3, ...]
+        t_inf = -0.5
+        t_supp = 1.0
+        psth_data = generate_PSTH_data(sample_data, t_inf, t_supp)
+
+    Note: The function assumes that the PSTH function is previously defined and available in the scope.
     """
     column1 = np.linspace(-t_inf, t_supp, len(PSTH(sample)[0]))
     column2 = PSTH(sample)[0]
@@ -539,12 +547,13 @@ def find_event_index(signal:list,freq, type=0, sampling_time_window=0,select=0):
     peaks = []
     if type == 0:
         #single spike signal
-        prime = []
-        for i in range(1, len(signal)):
-            prime.append(signal[i] - signal[i-1])
-
-        peaks = find_peaks(prime)[0]
-        return peaks.tolist()
+        for i,elem in enumerate(signal):
+            if elem > 0.1:
+                signal[i] = 1
+            else:
+                signal[i] = 0
+        diff = np.diff(signal)
+        return np.where(diff >= 0.9)[0]+ 1
     if type == 1:
         # big amount of spike in determined amount of time
         for i in range(1, len(signal)-1):
