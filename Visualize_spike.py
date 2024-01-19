@@ -60,7 +60,7 @@ action = input("voulez vous voir la visualisation 3D ?")
 if action == "oui":
     reduction_type = input("quel type de reduction voulez vous (pca/UMAP?")
 
-if reduction_type == "pca" or reduction_type == "PCA":
+if reduction_type in ("pca", "PCA", "Pca", "pCa", "pcA", "PcA", "pCA", "PCa"):
     pca = PCA(n_components=3)
     data_transformed = pca.fit_transform(array)
     fig = plt.figure()
@@ -73,7 +73,7 @@ if reduction_type == "pca" or reduction_type == "PCA":
     plt.title('Visualisation 3D avec PCA')
     plt.show()
 
-if reduction_type == 'UMAP' or reduction_type == 'umap':
+if reduction_type in ("umap", "UMAP", "Umap", "uMap", "umAp", "umaP", "uMAP", "UmAP", "UMaP", "UMAp", "uMaP", "uMaP"):
     
     reducer = umap.UMAP(n_components=3)
     embedding = reducer.fit_transform(array)
