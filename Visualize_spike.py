@@ -6,9 +6,10 @@ from mpl_toolkits.mplot3d import Axes3D
 import csv
 import numpy as np
 import umap
-folder_path = 'C:/Users/Vincent/Documents/GitHub/Data_Analysis/test.csv'
-folder_path = '/Users/vincent/Desktop/data Michael/Spike_bins/spikes_bin_1.csv'
-# C:\Users\Vincent\Documents\GitHub\Data_Analysis\spikes# Replace with your folder path
+import data_analysis as da
+folder_path = 'C:/Users/Vincent/Downloads/Recording 1'
+# folder_path = '/Users/vincent/Desktop/data Michael/Spike_bins/spikes_bin_1.csv'
+# C:/Users/Vincent/Documents/GitHub/Data_Analysis/spikes# Replace with your folder path
 # csv_files = [file for file in os.listdir(folder_path) if file.endswith('.csv')]
 
 # data_list = []
@@ -22,11 +23,26 @@ folder_path = '/Users/vincent/Desktop/data Michael/Spike_bins/spikes_bin_1.csv'
 # reshaped_data = np.array(data_list).reshape(-1, 1)
 def csv_to_numpy(file_path):
     data_list = []
-    with open(file_path, 'r') as file:
-        csv_reader = csv.reader(file)
-        header = next(csv_reader)
-        for row in csv_reader:
-            data_list.append(row)
+
+    def process_file(file_path):
+        with open(file_path, 'r') as file:
+            csv_reader = csv.reader(file)
+            header = next(csv_reader, None)  # Skip the header if it exists
+            for row in csv_reader:
+                data_list.append(row)
+
+    def process_directory(directory_path):
+        for item in os.listdir(directory_path):
+            item_path = os.path.join(directory_path, item)
+            if os.path.isfile(item_path):
+                process_file(item_path)
+            elif os.path.isdir(item_path):
+                process_directory(item_path)  # Recursive call
+
+    if os.path.isfile(file_path):
+        process_file(file_path)
+    elif os.path.isdir(file_path):
+        process_directory(file_path)
     
     # Transpose the list of rows to get a list of columns
     transposed_data = list(zip(*data_list))
@@ -39,7 +55,6 @@ def csv_to_numpy(file_path):
             numpy_arrays.append(float_column)
 
         except ValueError:
-            
             numpy_arrays.append(np.array(column))
 
     return numpy_arrays
@@ -55,7 +70,11 @@ if action == "oui":
     x = np.arange(len(selected_row))
     plt.plot(x, selected_row)
     plt.show()
-
+    action = input("voulez vous créer un nouveau csv pour ce neurone ?")
+    if action == "oui":
+        with open(f'neuronne_{neurone}.csv', 'w', newline='') as csvfile:
+            spamwriter = csv.writer(csvfile, delimiter=',')
+            spamwriter.writerow(selected_row)
 action = input("voulez vous voir la visualisation 3D ?")
 if action == "oui":
     reduction_type = input("quel type de reduction voulez vous (pca/UMAP?")
@@ -72,7 +91,11 @@ if reduction_type in ("pca", "PCA", "Pca", "pCa", "pcA", "PcA", "pCA", "PCa"):
     ax.set_zlabel('PC3')
     plt.title('Visualisation 3D avec PCA')
     plt.show()
-
+    action = input("Voulez vous sauvegarder les données ?")
+    if action == "oui":
+        with open('pca.csv', 'w', newline='') as csvfile:
+            spamwriter = csv.writer(csvfile, delimiter=',')
+            spamwriter.writerow(data_transformed)
 if reduction_type in ("umap", "UMAP", "Umap", "uMap", "umAp", "umaP", "uMAP", "UmAP", "UMaP", "UMAp", "uMaP", "uMaP"):
     
     reducer = umap.UMAP(n_components=3)
@@ -86,17 +109,6 @@ if reduction_type in ("umap", "UMAP", "Umap", "uMap", "umAp", "umaP", "uMAP", "U
     ax.set_zlabel('PC3')
     plt.title('Visualisation 3D avec UMAP')
     plt.show()
-# oui
+
     
-# # Select 3 dimensions from the data_list
-# selected_dimensions = [data_list[i] for i in [0, 2, 4]]  # Replace [0, 2, 4] with the indices of the desired dimensions
-
-# # Perform UMAP dimensionality reduction
-# reducer = umap.UMAP(n_components=3)
-# embedding = reducer.fit_transform(selected_dimensions)
-
-# # Plot the 3D UMAP
-# fig = plt.figure()
-# ax = fig.add_subplot(111, projection='3d')
-# ax.scatter(embedding[:, 0], embedding[:, 1], embedding[:, 2])
-# plt.show()
+    
