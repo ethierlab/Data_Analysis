@@ -7,8 +7,8 @@ import csv
 import numpy as np
 import umap
 import data_analysis as da
-folder_path = 'C:/Users/Vincent/Downloads/Recording 1'
-# folder_path = '/Users/vincent/Desktop/data Michael/Spike_bins/spikes_bin_1.csv'
+import pandas as pd
+
 # C:/Users/Vincent/Documents/GitHub/Data_Analysis/spikes# Replace with your folder path
 # csv_files = [file for file in os.listdir(folder_path) if file.endswith('.csv')]
 
@@ -22,6 +22,9 @@ folder_path = 'C:/Users/Vincent/Downloads/Recording 1'
 
 # reshaped_data = np.array(data_list).reshape(-1, 1)
 def csv_to_numpy(file_path):
+    if not os.path.exists(file_path):
+        print(f"Le fichier ou le dossier {file_path} n'existe pas.")
+        return None
     data_list = []
 
     def process_file(file_path):
@@ -48,54 +51,198 @@ def csv_to_numpy(file_path):
     transposed_data = list(zip(*data_list))
 
     # Convert each column to a separate NumPy array
-    numpy_arrays = []
+    numpy_columns = []
     for column in transposed_data:
         try:
             float_column = np.array(column, dtype=float)
-            numpy_arrays.append(float_column)
+            numpy_columns.append(float_column)
 
         except ValueError:
-            numpy_arrays.append(np.array(column))
+            numpy_columns.append(np.array(column))
+    # Combiner les colonnes en un seul tableau numpy        
+    combined_array = np.column_stack(numpy_columns)
+    return combined_array
 
-    return numpy_arrays
+def plot_pca_variance(variance_explained):
+    """
+    Affiche un graphique de la variance expliquée par chaque composante principale d'une PCA.
+
+    :param variance_explained: Une liste ou un tableau numpy contenant les pourcentages de variance expliquée par chaque composante.
+    """
+    composantes = np.arange(1, len(variance_explained) + 1)  # Composantes principales
+    variance_cumulee = np.cumsum(variance_explained)  # Variance cumulée
+
+    # Création du graphique
+    plt.figure(figsize=(10, 6))
+    plt.bar(composantes, variance_explained, alpha=0.6, label='Variance Expliquée par Composante')
+    plt.plot(composantes, variance_cumulee, color='red', marker='o', linestyle='dashed', 
+             linewidth=2, markersize=12, label='Variance Cumulée')
+
+    # Ajout des titres et labels
+    plt.title('Variance Expliquée par les Composantes Principales (PCA)')
+    plt.xlabel('Composantes Principales')
+    plt.ylabel('Pourcentage de Variance Expliquée')
+    plt.xticks(composantes)
+    plt.legend()
+
+    # Affichage du graphique
+    plt.show()
+    
+def read_csv_and_transform(file_path, base_change_matrix):
+    # Lire le fichier CSV et le convertir en matrice NumPy
+    df = pd.read_csv(file_path)
+    data_matrix = df.values
+
+    # Vérifier que les dimensions sont compatibles pour la multiplication
+    if data_matrix.shape[1] == base_change_matrix.shape[0]:
+        # Multiplier la matrice de données par la matrice de changement de base
+        transformed_matrix = np.dot(data_matrix, base_change_matrix)
+        return transformed_matrix
+    else:
+        print("Les dimensions des matrices ne sont pas compatibles pour la multiplication.")
+        return None
+
+def process_folder_for_psth(folder_path, column_index, base_change_matrix=None):
+    all_column_data = []
+    for file in os.listdir(folder_path):
+        if file.endswith('.csv'):
+            file_path = os.path.join(folder_path, file)
+            transformed_data = read_csv_and_transform(file_path, base_change_matrix)
+            if transformed_data is not None:
+                all_column_data.append(transformed_data[:, column_index])
+
+    # Trouver la longueur de la liste la plus courte
+    min_length = min(map(len, all_column_data))
+
+    # Tronquer toutes les listes à la longueur de la liste la plus courte
+    truncated_data = [col[:min_length] for col in all_column_data]
+
+    return truncated_data
+
+def process_csv_files_in_folder(folder_path, column_index):
+    all_column_data = []
+
+    # Lire chaque fichier CSV et extraire la colonne spécifiée
+    for file in os.listdir(folder_path):
+        if file.endswith('.csv'):
+            file_path = os.path.join(folder_path, file)
+            df = pd.read_csv(file_path)
+            data_matrix = df.values
+            all_column_data.append(data_matrix[:, column_index])
+
+    # Trouver la longueur de la liste la plus courte
+    min_length = min(map(len, all_column_data))
+
+    # Tronquer toutes les listes à la longueur de la liste la plus courte
+    truncated_data = [col[:min_length] for col in all_column_data]
+
+    return truncated_data
+def plot_psth(psth_results, dimension):
+    psth_low, psth_mean, psth_high = psth_results
+    indices = range(len(psth_mean))
+
+    plt.plot(indices, psth_mean, color='black')
+    
+    # Dessiner les courbes pour les bornes inférieures et supérieures en mode invisible
+    plt.plot(indices, psth_low, color='none')
+    plt.plot(indices, psth_high, color='none')
+
+    # Remplir l'espace entre les courbes de bornes inférieures et supérieures
+    plt.fill_between(indices, psth_low, psth_high, color='red', alpha=0.5)
+
+    # Dessiner à nouveau la courbe moyenne pour qu'elle soit bien visible
+    plt.plot(indices, psth_mean, color='red')
+
+    # Ajout des titres et des étiquettes
+    plt.title(f'PSTH for PCA {dimension + 1}')
+    plt.xlabel('Index')
+    plt.ylabel('Value')
+
+    # Afficher le graphique
+    plt.show()
+
+
+folder_path = 'C:/Users/Vincent/Downloads/Recording 1'
+# folder_path = "C:/Users/Vincent/Downloads/Recording 1/spikes_bin_1.csv"
+# folder_path = '/Users/vincent/Desktop/data Michael/Spike_bins/spikes_bin_1.csv'
 
 array = csv_to_numpy(folder_path)
-action = input("voulez vous voir un seul neuronne ?")
+
+action = input("voulez-vous voir un seul neurone ?")
 
 if action == "oui":
-    neurone= input("quel est le neuronne voulu ?")
+    neurone= input("quel est le neurone voulu ?")
     
-    selected_row = np.array(array[int(neurone)-1][1:], dtype=float)
+    selected_row = array[:, int(neurone)]
 
     x = np.arange(len(selected_row))
     plt.plot(x, selected_row)
     plt.show()
-    action = input("voulez vous créer un nouveau csv pour ce neurone ?")
+    action = input("voulez-vous créer un nouveau csv pour ce neurone ?")
     if action == "oui":
         with open(f'neuronne_{neurone}.csv', 'w', newline='') as csvfile:
             spamwriter = csv.writer(csvfile, delimiter=',')
             spamwriter.writerow(selected_row)
-action = input("voulez vous voir la visualisation 3D ?")
+action = input("voulez vous voir le PSTH de chaque neurone ?")
+if action == "oui":
+    for neurone in range(array.shape[1]):
+        all_data = process_csv_files_in_folder(folder_path, neurone)
+        psth_results = da.PSTH(all_data)
+        
+        plot_psth(psth_results,neurone)
+action = input("voulez vous voir faire une réduction de dimensionalité ?")
 if action == "oui":
     reduction_type = input("quel type de reduction voulez vous (pca/UMAP?")
 
 if reduction_type in ("pca", "PCA", "Pca", "pCa", "pcA", "PcA", "pCA", "PCa"):
-    pca = PCA(n_components=3)
-    data_transformed = pca.fit_transform(array)
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-    ax.scatter(data_transformed[:, 0], data_transformed[:, 1], data_transformed[:, 2])
+    print(array.shape)
+    # Calculer le PCA et montre la variance expliquée
+    pca = PCA().fit(array)
+    variance = pca.explained_variance_ratio_ * 100
+    plot_pca_variance(variance)
 
-    ax.set_xlabel('PC1')
-    ax.set_ylabel('PC2')
-    ax.set_zlabel('PC3')
-    plt.title('Visualisation 3D avec PCA')
-    plt.show()
-    action = input("Voulez vous sauvegarder les données ?")
+    reduction = input("combien de dimension voulez-vous conserver ?")
+    # Réduire les données à X dimensions
+    pca = PCA(n_components=int(reduction))
+    data_transformed = pca.fit_transform(array)
+    
+    
+    
+    action = input("voulez vous voir le PSTH de chaque dimension ?")
     if action == "oui":
-        with open('pca.csv', 'w', newline='') as csvfile:
-            spamwriter = csv.writer(csvfile, delimiter=',')
-            spamwriter.writerow(data_transformed)
+        psth = []
+        matrix = pca.components_
+        for dimension in range(matrix.T.shape[1]):
+            all_data = process_folder_for_psth(folder_path, dimension,matrix.T)
+            psth_results = da.PSTH(all_data)
+            psth.append(psth_results)
+            plot_psth(psth_results,dimension)
+    psth = None
+    # action = input("Voulez vous sauvegarder les données ?")
+    # if action == "oui":
+    #     with open('pca.csv', 'w', newline='') as csvfile:
+    #         spamwriter = csv.writer(csvfile, delimiter=',')
+    #         spamwriter.writerow(data_transformed)
+
+    action = input("voulez vous voir la visualisation 3D ?")
+    if action == "oui":
+        if psth is None:
+            psth = []
+            matrix = pca.components_
+            for dimension in range(matrix.T.shape[1]):
+                all_data = process_folder_for_psth(folder_path, dimension,matrix.T)
+                psth_results = da.PSTH(all_data)
+                psth.append(psth_results)
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        ax.plot(psth[0][1], psth[1][1], psth[2][1])
+
+        ax.set_xlabel('PC1')
+        ax.set_ylabel('PC2')
+        ax.set_zlabel('PC3')
+        plt.title('Visualisation 3D avec PCA')
+        plt.show()
+        
 if reduction_type in ("umap", "UMAP", "Umap", "uMap", "umAp", "umaP", "uMAP", "UmAP", "UMaP", "UMAp", "uMaP", "uMaP"):
     
     reducer = umap.UMAP(n_components=3)
