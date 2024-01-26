@@ -24,7 +24,7 @@ class StateMachine():
 
     def set_state(self, name):
         self.current_state = name
-
+    
     def run(self):
         try:
             state_function = self.states[self.current_state]

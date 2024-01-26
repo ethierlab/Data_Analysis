@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt 
 from sklearn.decomposition import PCA
 from mpl_toolkits.mplot3d import Axes3D
+from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import csv
 import numpy as np
 import umap
@@ -161,7 +162,31 @@ def plot_psth(psth_results, dimension):
     # Afficher le graphique
     plt.show()
 
-
+def plot_variance_cloud(ax, mean, std_dev_plus, std_dev_minus):
+    # Créer un nuage de points pour la variance
+    X = np.concatenate([mean, mean])
+    Y = np.concatenate([std_dev_plus, std_dev_minus])
+    Z = np.concatenate([std_dev_plus, std_dev_minus])
+    ax.scatter(X, Y, Z, color='red', alpha=0.1)
+def create_variance_plane(ax, base, spread, axis):
+    u = np.linspace(np.min(base), np.max(base), 100)
+    v = np.linspace(-1, 1, 10)
+    U, V = np.meshgrid(u, v)
+    if axis == 'x':
+        X = base
+        Y = spread[0] * V + base
+        Z = spread[1] * V + base
+    elif axis == 'y':
+        X = spread[0] * V + base
+        Y = base
+        Z = spread[1] * V + base
+    elif axis == 'z':
+        X = spread[0] * V + base
+        Y = spread[1] * V + base
+        Z = base
+    
+    # Ajouter une surface pour visualiser la variance
+    ax.plot_surface(X, Y, Z, color='red', alpha=0.1, linewidth=0)
 folder_path = 'C:/Users/Vincent/Downloads/Recording 1'
 # folder_path = "C:/Users/Vincent/Downloads/Recording 1/spikes_bin_1.csv"
 # folder_path = '/Users/vincent/Desktop/data Michael/Spike_bins/spikes_bin_1.csv'
@@ -193,15 +218,16 @@ if action == "oui":
 action = input("voulez vous voir faire une réduction de dimensionalité ?")
 if action == "oui":
     reduction_type = input("quel type de reduction voulez vous (pca/UMAP?")
-
+reduction_type = 'pca'
 if reduction_type in ("pca", "PCA", "Pca", "pCa", "pcA", "PcA", "pCA", "PCa"):
     print(array.shape)
     # Calculer le PCA et montre la variance expliquée
     pca = PCA().fit(array)
     variance = pca.explained_variance_ratio_ * 100
-    plot_pca_variance(variance)
+    # plot_pca_variance(variance)
 
     reduction = input("combien de dimension voulez-vous conserver ?")
+    reduction = 3
     # Réduire les données à X dimensions
     pca = PCA(n_components=int(reduction))
     data_transformed = pca.fit_transform(array)
@@ -225,6 +251,7 @@ if reduction_type in ("pca", "PCA", "Pca", "pCa", "pcA", "PcA", "pCA", "PCa"):
     #         spamwriter.writerow(data_transformed)
 
     action = input("voulez vous voir la visualisation 3D ?")
+    action = 'oui'
     if action == "oui":
         if psth is None:
             psth = []
@@ -232,15 +259,53 @@ if reduction_type in ("pca", "PCA", "Pca", "pCa", "pcA", "PcA", "pCA", "PCa"):
             for dimension in range(matrix.T.shape[1]):
                 all_data = process_folder_for_psth(folder_path, dimension,matrix.T)
                 psth_results = da.PSTH(all_data)
+                # plot_psth(psth_results,dimension)
                 psth.append(psth_results)
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
-        ax.plot(psth[0][1], psth[1][1], psth[2][1])
+        ax.plot(psth[0][1], psth[1][1], psth[2][1], label='Mean Trajectory')
+        mean_trajectory = np.array([psth[0][1], psth[1][1], psth[2][1]])  # Une matrice 3 x N des points de la trajectoire moyenne
+        std_x = psth[0][2][0] - psth[0][1][0]  # Écart-type pour la dimension x
+        std_y = psth[1][2][0] - psth[1][1][0]  # Écart-type pour la dimension y
+        std_z = psth[2][2][0] - psth[2][1][0]
+        def plot_ellipses(ax, trajectory, std_x, std_y, std_z):
+            # Nombre de points pour représenter l'ellipse
+            num_points = 100  
+            theta = np.linspace(0, 2 * np.pi, num_points)
 
-        ax.set_xlabel('PC1')
-        ax.set_ylabel('PC2')
-        ax.set_zlabel('PC3')
-        plt.title('Visualisation 3D avec PCA')
+            # Tracer une ellipse à chaque point de la trajectoire
+            for i in range(trajectory.shape[1]):
+                # Coordonnées du centre de l'ellipse
+                x_center, y_center, z_center = trajectory[:, i]
+
+                # Vecteurs pour l'ellipse
+                x_ellipse = std_x * np.cos(theta)
+                y_ellipse = std_y * np.sin(theta)
+
+                # Tracer l'ellipse
+                ax.plot(x_center + x_ellipse, y_center + y_ellipse, z_center + std_z * np.ones_like(theta), color='r', alpha=0.1)
+
+        # Appeler la fonction pour tracer les ellipses le long de la trajectoire
+        plot_ellipses(ax, mean_trajectory, std_x, std_y, std_z)
+
+        # Tracer les surfaces
+        # ax.plot_surface(X, Y, Z_upper, color='red', alpha=0.3)
+        # ax.plot_surface(X, Y, Z_lower, color='red', alpha=0.3)
+        
+        # plot_variance_cloud(ax, psth[0][1], psth[0][2], psth[0][0])
+        # plot_variance_cloud(ax, psth[1][1], psth[1][2], psth[1][0])  
+        # plot_variance_cloud(ax, psth[2][1], psth[2][2], psth[2][0])
+        
+        # create_variance_plane(ax, psth[0][1], (psth[0][0], psth[0][2]), 'x')
+        # create_variance_plane(ax, psth[1][1], (psth[1][0], psth[1][2]), 'y')
+        # create_variance_plane(ax, psth[2][1], (psth[2][0], psth[2][2]), 'z')
+
+        # Personnaliser le graphique
+        ax.set_xlabel('PCA 1')
+        ax.set_ylabel('PCA 2')
+        ax.set_zlabel('PCA 3')
+        ax.legend()
+
         plt.show()
         
 if reduction_type in ("umap", "UMAP", "Umap", "uMap", "umAp", "umaP", "uMAP", "UmAP", "UMaP", "UMAp", "uMaP", "uMaP"):
