@@ -160,7 +160,7 @@ def plot_psth(psth_results, dimension, temps_debut, incrementation,pca=False):
         plt.title(f'PSTH pour le neurone {dimension + 1}')
     plt.xlabel('Index')
     plt.ylabel('Value')
-
+    plt.savefig(f'psth_{dimension + 1}.png')
     # Afficher le graphique
     plt.show()
 
@@ -268,9 +268,6 @@ if reduction_type.lower() == 'pca':
         # Appeler la fonction pour tracer les ellipses le long de la trajectoire
         plot_ellipses(ax, mean_trajectory, std_x, std_y, std_z)
 
-        # Tracer les surfaces
-        # ax.plot_surface(X, Y, Z_upper, color='red', alpha=0.3)
-        # ax.plot_surface(X, Y, Z_lower, color='red', alpha=0.3)
         
         # plot_variance_cloud(ax, psth[0][1], psth[0][2], psth[0][0])
         # plot_variance_cloud(ax, psth[1][1], psth[1][2], psth[1][0])  
