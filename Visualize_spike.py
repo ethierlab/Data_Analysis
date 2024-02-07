@@ -138,10 +138,9 @@ def process_csv_files_in_folder(folder_path, column_index):
     truncated_data = [col[:min_length] for col in all_column_data]
 
     return truncated_data
-def plot_psth(psth_results, dimension):
+def plot_psth(psth_results, dimension, temps_debut, incrementation,pca=False):
     psth_low, psth_mean, psth_high = psth_results
-    indices = range(len(psth_mean))
-
+    indices = np.arange(temps_debut, temps_debut + len(psth_mean) * incrementation, incrementation)
     plt.plot(indices, psth_mean, color='black')
     
     # Dessiner les courbes pour les bornes inférieures et supérieures en mode invisible
@@ -155,51 +154,32 @@ def plot_psth(psth_results, dimension):
     plt.plot(indices, psth_mean, color='red')
 
     # Ajout des titres et des étiquettes
+    
     plt.title(f'PSTH for PCA {dimension + 1}')
+    if pca == False:
+        plt.title(f'PSTH pour le neurone {dimension + 1}')
     plt.xlabel('Index')
     plt.ylabel('Value')
 
     # Afficher le graphique
     plt.show()
 
-def plot_variance_cloud(ax, mean, std_dev_plus, std_dev_minus):
-    # Créer un nuage de points pour la variance
-    X = np.concatenate([mean, mean])
-    Y = np.concatenate([std_dev_plus, std_dev_minus])
-    Z = np.concatenate([std_dev_plus, std_dev_minus])
-    ax.scatter(X, Y, Z, color='red', alpha=0.1)
-def create_variance_plane(ax, base, spread, axis):
-    u = np.linspace(np.min(base), np.max(base), 100)
-    v = np.linspace(-1, 1, 10)
-    U, V = np.meshgrid(u, v)
-    if axis == 'x':
-        X = base
-        Y = spread[0] * V + base
-        Z = spread[1] * V + base
-    elif axis == 'y':
-        X = spread[0] * V + base
-        Y = base
-        Z = spread[1] * V + base
-    elif axis == 'z':
-        X = spread[0] * V + base
-        Y = spread[1] * V + base
-        Z = base
     
     # Ajouter une surface pour visualiser la variance
     ax.plot_surface(X, Y, Z, color='red', alpha=0.1, linewidth=0)
-folder_path = 'C:/Users/Vincent/Downloads/Recording 1'
+# folder_path = 'C:/Users/Vincent/Downloads/Recording 1'
 # folder_path = "C:/Users/Vincent/Downloads/Recording 1/spikes_bin_1.csv"
-# folder_path = '/Users/vincent/Desktop/data Michael/Spike_bins/spikes_bin_1.csv'
-
+folder_path = '/Users/vincent/Desktop/data Michael/Spike_bins/spikes_bin_1.csv' 
+folder_path = "/Users/vincent/Desktop/data Michael/Spike_bins/Recording 1"
 array = csv_to_numpy(folder_path)
 
 action = input("voulez-vous voir un seul neurone ?")
-
-if action == "oui":
+temps_debut = - int(input("Quel est le temps de préinitiation? (ms) "))
+incrementation = int(input("Quel est la fréquence entre les données ? (ms) "))
+if action.lower() == "oui":
     neurone= input("quel est le neurone voulu ?")
     
     selected_row = array[:, int(neurone)]
-
     x = np.arange(len(selected_row))
     plt.plot(x, selected_row)
     plt.show()
@@ -209,22 +189,22 @@ if action == "oui":
             spamwriter = csv.writer(csvfile, delimiter=',')
             spamwriter.writerow(selected_row)
 action = input("voulez vous voir le PSTH de chaque neurone ?")
-if action == "oui":
+if action.lower() == "oui":
     for neurone in range(array.shape[1]):
         all_data = process_csv_files_in_folder(folder_path, neurone)
         psth_results = da.PSTH(all_data)
         
-        plot_psth(psth_results,neurone)
+        plot_psth(psth_results,neurone, temps_debut, incrementation)
 action = input("voulez vous voir faire une réduction de dimensionalité ?")
-if action == "oui":
+if action.lower() == "oui":
     reduction_type = input("quel type de reduction voulez vous (pca/UMAP?")
 reduction_type = 'pca'
-if reduction_type in ("pca", "PCA", "Pca", "pCa", "pcA", "PcA", "pCA", "PCa"):
+if reduction_type.lower() == 'pca':
     print(array.shape)
     # Calculer le PCA et montre la variance expliquée
     pca = PCA().fit(array)
     variance = pca.explained_variance_ratio_ * 100
-    # plot_pca_variance(variance)
+    plot_pca_variance(variance)
 
     reduction = input("combien de dimension voulez-vous conserver ?")
     reduction = 3
@@ -242,7 +222,7 @@ if reduction_type in ("pca", "PCA", "Pca", "pCa", "pcA", "PcA", "pCA", "PCa"):
             all_data = process_folder_for_psth(folder_path, dimension,matrix.T)
             psth_results = da.PSTH(all_data)
             psth.append(psth_results)
-            plot_psth(psth_results,dimension)
+            plot_psth(psth_results,dimension, temps_debut, incrementation, pca=True)
     psth = None
     # action = input("Voulez vous sauvegarder les données ?")
     # if action == "oui":
@@ -252,7 +232,7 @@ if reduction_type in ("pca", "PCA", "Pca", "pCa", "pcA", "PcA", "pCA", "PCa"):
 
     action = input("voulez vous voir la visualisation 3D ?")
     action = 'oui'
-    if action == "oui":
+    if action.lower() == "oui":
         if psth is None:
             psth = []
             matrix = pca.components_
@@ -308,7 +288,7 @@ if reduction_type in ("pca", "PCA", "Pca", "pCa", "pcA", "PcA", "pCA", "PCa"):
 
         plt.show()
         
-if reduction_type in ("umap", "UMAP", "Umap", "uMap", "umAp", "umaP", "uMAP", "UmAP", "UMaP", "UMAp", "uMaP", "uMaP"):
+if reduction_type.lower() == 'umap':
     
     reducer = umap.UMAP(n_components=3)
     embedding = reducer.fit_transform(array)
