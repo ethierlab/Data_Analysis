@@ -11,31 +11,34 @@ import data_analysis as da
 import pandas as pd
 
 
-def csv_to_numpy(file_path):
+def csv_to_numpy(file_path, encoding='utf-8'):
     if not os.path.exists(file_path):
         print(f"Le fichier ou le dossier {file_path} n'existe pas.")
         return None
     data_list = []
 
-    def process_file(file_path):
-        with open(file_path, 'r') as file:
-            csv_reader = csv.reader(file)
-            header = next(csv_reader, None)  # Skip the header if it exists
-            for row in csv_reader:
-                data_list.append(row)
+    def process_file(file_path, encoding='utf-8'):
+        try:
+            with open(file_path, 'r', encoding=encoding) as file:
+                csv_reader = csv.reader(file)
+                header = next(csv_reader, None)  # Skip the header if it exists
+                for row in csv_reader:
+                    data_list.append(row)
+        except UnicodeDecodeError as e:
+            print(f"Erreur de décodage pour le fichier {file_path}: {e}. Essayez un encodage différent.")
 
-    def process_directory(directory_path):
+    def process_directory(directory_path, encoding='utf-8'):
         for item in os.listdir(directory_path):
             item_path = os.path.join(directory_path, item)
             if os.path.isfile(item_path):
-                process_file(item_path)
+                process_file(item_path, encoding)
             elif os.path.isdir(item_path):
-                process_directory(item_path)  # Recursive call
+                process_directory(item_path, encoding)  # Recursive call
 
     if os.path.isfile(file_path):
-        process_file(file_path)
+        process_file(file_path, encoding)
     elif os.path.isdir(file_path):
-        process_directory(file_path)
+        process_directory(file_path, encoding)
     
     # Transpose the list of rows to get a list of columns
     transposed_data = list(zip(*data_list))
@@ -137,8 +140,8 @@ def plot_psth_g(psth_results, dimension, temps_debut, incrementation,pca=False):
     # Dessiner à nouveau la courbe moyenne pour qu'elle soit bien visible
     plt.plot(indices, psth_mean, color='green')
     # Afficher le graphique
-folder_path = '/Users/vincent/Desktop/data Michael/dec-3-5/3first' 
-folder_path_1= "/Users/vincent/Desktop/data Michael/dec-3-5/3last"
+folder_path = '/Users/vincent/Desktop/data Michael/mai-9-1/3first' 
+folder_path_1= "/Users/vincent/Desktop/data Michael/mai-9-1/3last"
 array = csv_to_numpy(folder_path)
 array_1 = csv_to_numpy(folder_path_1)
 temps_debut = - 1500/1000
@@ -159,4 +162,6 @@ for neurone in range(min(array.shape[1], array_1.shape[1])):
     plot_psth_g(psth_3first,neurone, temps_debut, incrementation)
     plot_psth(psth_3last,neurone, temps_debut, incrementation)
     plt.legend()
-    plt.show()
+    plt.savefig(f'psth_{neurone}.png')
+    plt.clf()
+    # plt.show()
