@@ -10,18 +10,6 @@ import umap
 import data_analysis as da
 import pandas as pd
 
-# C:/Users/Vincent/Documents/GitHub/Data_Analysis/spikes# Replace with your folder path
-# csv_files = [file for file in os.listdir(folder_path) if file.endswith('.csv')]
-
-# data_list = []
-# for file in csv_files:
-#     file_path = os.path.join(folder_path, file)
-#     data = np.genfromtxt(file_path, delimiter=',', usecols=0)
-#     data_list.append(data.tolist())
-
-# print(data_list)
-
-# reshaped_data = np.array(data_list).reshape(-1, 1)
 def csv_to_numpy(file_path):
     if not os.path.exists(file_path):
         print(f"Le fichier ou le dossier {file_path} n'existe pas.")
@@ -155,33 +143,42 @@ def plot_psth(psth_results, dimension, temps_debut, incrementation,pca=False):
 
     # Ajout des titres et des étiquettes
     
-    plt.title(f'PSTH for PCA {dimension + 1}')
+    
     if pca == False:
         plt.title(f'PSTH pour le neurone {dimension + 1}')
+    else:
+        plt.title(f'PSTH pour la dimension {dimension + 1}')
     plt.xlabel('Index')
     plt.ylabel('Value')
     plt.savefig(f'psth_{dimension + 1}.png')
     # Afficher le graphique
     plt.show()
 
-    
-    # Ajouter une surface pour visualiser la variance
-    ax.plot_surface(X, Y, Z, color='red', alpha=0.1, linewidth=0)
-# folder_path = 'C:/Users/Vincent/Downloads/Recording 1'
+def generer_vecteur(longueur, pas):
+    # Calculer la valeur maximale pour atteindre la longueur souhaitée
+    valeur_max = (longueur - 1) * pas
+    # Générer le vecteur
+    vecteur = [i * pas for i in range(longueur)]
+    return vecteur
+
+folder_path = 'C:/Users/Vincent/Downloads/Recording 1'
 # folder_path = "C:/Users/Vincent/Downloads/Recording 1/spikes_bin_1.csv"
-folder_path = '/Users/vincent/Desktop/data Michael/Spike_bins/spikes_bin_1.csv' 
-folder_path = "/Users/vincent/Desktop/data Michael/Spike_bins/Recording 1"
+# folder_path = '/Users/vincent/Desktop/data Michael/Spike_bins/spikes_bin_1.csv' 
+# folder_path = "/Users/vincent/Desktop/data Michael/Spike_bins/Recording 1"
 array = csv_to_numpy(folder_path)
 
 action = input("voulez-vous voir un seul neurone ?")
-temps_debut = - int(input("Quel est le temps de préinitiation? (ms) "))
-incrementation = int(input("Quel est la fréquence entre les données ? (ms) "))
+temps_debut = - 500
+incrementation = 50
 if action.lower() == "oui":
     neurone= input("quel est le neurone voulu ?")
     
     selected_row = array[:, int(neurone)]
-    x = np.arange(len(selected_row))
+    x = generer_vecteur(len(selected_row), incrementation)
     plt.plot(x, selected_row)
+    plt.xlabel('Temps [ms]')
+    plt.ylabel('Intensité du signal')
+    plt.savefig(f'neurone_{neurone}.png')
     plt.show()
     action = input("voulez-vous créer un nouveau csv pour ce neurone ?")
     if action == "oui":
@@ -206,7 +203,7 @@ if reduction_type.lower() == 'pca':
     variance = pca.explained_variance_ratio_ * 100
     plot_pca_variance(variance)
 
-    reduction = input("combien de dimension voulez-vous conserver ?")
+    # reduction = input("combien de dimension voulez-vous conserver ?")
     reduction = 3
     # Réduire les données à X dimensions
     pca = PCA(n_components=int(reduction))
@@ -230,7 +227,7 @@ if reduction_type.lower() == 'pca':
     #         spamwriter = csv.writer(csvfile, delimiter=',')
     #         spamwriter.writerow(data_transformed)
 
-    action = input("voulez vous voir la visualisation 3D ?")
+    # action = input("voulez vous voir la visualisation 3D ?")
     action = 'oui'
     if action.lower() == "oui":
         if psth is None:
@@ -239,50 +236,22 @@ if reduction_type.lower() == 'pca':
             for dimension in range(matrix.T.shape[1]):
                 all_data = process_folder_for_psth(folder_path, dimension,matrix.T)
                 psth_results = da.PSTH(all_data)
-                # plot_psth(psth_results,dimension)
+                plot_psth(psth_results,dimension,temps_debut, incrementation, pca=True)
                 psth.append(psth_results)
         fig = plt.figure()
+        
         ax = fig.add_subplot(111, projection='3d')
         ax.plot(psth[0][1], psth[1][1], psth[2][1], label='Mean Trajectory')
         mean_trajectory = np.array([psth[0][1], psth[1][1], psth[2][1]])  # Une matrice 3 x N des points de la trajectoire moyenne
-        std_x = psth[0][2][0] - psth[0][1][0]  # Écart-type pour la dimension x
-        std_y = psth[1][2][0] - psth[1][1][0]  # Écart-type pour la dimension y
-        std_z = psth[2][2][0] - psth[2][1][0]
-        def plot_ellipses(ax, trajectory, std_x, std_y, std_z):
-            # Nombre de points pour représenter l'ellipse
-            num_points = 100  
-            theta = np.linspace(0, 2 * np.pi, num_points)
-
-            # Tracer une ellipse à chaque point de la trajectoire
-            for i in range(trajectory.shape[1]):
-                # Coordonnées du centre de l'ellipse
-                x_center, y_center, z_center = trajectory[:, i]
-
-                # Vecteurs pour l'ellipse
-                x_ellipse = std_x * np.cos(theta)
-                y_ellipse = std_y * np.sin(theta)
-
-                # Tracer l'ellipse
-                ax.plot(x_center + x_ellipse, y_center + y_ellipse, z_center + std_z * np.ones_like(theta), color='r', alpha=0.1)
-
-        # Appeler la fonction pour tracer les ellipses le long de la trajectoire
-        plot_ellipses(ax, mean_trajectory, std_x, std_y, std_z)
-
         
-        # plot_variance_cloud(ax, psth[0][1], psth[0][2], psth[0][0])
-        # plot_variance_cloud(ax, psth[1][1], psth[1][2], psth[1][0])  
-        # plot_variance_cloud(ax, psth[2][1], psth[2][2], psth[2][0])
-        
-        # create_variance_plane(ax, psth[0][1], (psth[0][0], psth[0][2]), 'x')
-        # create_variance_plane(ax, psth[1][1], (psth[1][0], psth[1][2]), 'y')
-        # create_variance_plane(ax, psth[2][1], (psth[2][0], psth[2][2]), 'z')
+    
 
         # Personnaliser le graphique
         ax.set_xlabel('PCA 1')
         ax.set_ylabel('PCA 2')
         ax.set_zlabel('PCA 3')
         ax.legend()
-
+        plt.savefig('pca_3d.png')
         plt.show()
         
 if reduction_type.lower() == 'umap':
