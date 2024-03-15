@@ -10,6 +10,7 @@ import umap
 import data_analysis as da
 import pandas as pd
 
+# reshaped_data = np.array(data_list).reshape(-1, 1)
 def csv_to_numpy(file_path):
     if not os.path.exists(file_path):
         print(f"Le fichier ou le dossier {file_path} n'existe pas.")
@@ -17,7 +18,7 @@ def csv_to_numpy(file_path):
     data_list = []
 
     def process_file(file_path):
-        with open(file_path, 'r') as file:
+        with open(file_path, 'r', encoding='iso-8859-1') as file:
             csv_reader = csv.reader(file)
             header = next(csv_reader, None)  # Skip the header if it exists
             for row in csv_reader:
@@ -86,6 +87,7 @@ def read_csv_and_transform(file_path, base_change_matrix):
     if data_matrix.shape[1] == base_change_matrix.shape[0]:
         # Multiplier la matrice de données par la matrice de changement de base
         transformed_matrix = np.dot(data_matrix, base_change_matrix)
+        print(transformed_matrix.shape)
         return transformed_matrix
     else:
         print("Les dimensions des matrices ne sont pas compatibles pour la multiplication.")
@@ -143,42 +145,32 @@ def plot_psth(psth_results, dimension, temps_debut, incrementation,pca=False):
 
     # Ajout des titres et des étiquettes
     
-    
+    plt.title(f'PSTH for PCA {dimension + 1}')
     if pca == False:
         plt.title(f'PSTH pour le neurone {dimension + 1}')
-    else:
-        plt.title(f'PSTH pour la dimension {dimension + 1}')
     plt.xlabel('Index')
     plt.ylabel('Value')
-    plt.savefig(f'psth_{dimension + 1}.png')
+
     # Afficher le graphique
     plt.show()
 
-def generer_vecteur(longueur, pas):
-    # Calculer la valeur maximale pour atteindre la longueur souhaitée
-    valeur_max = (longueur - 1) * pas
-    # Générer le vecteur
-    vecteur = [i * pas for i in range(longueur)]
-    return vecteur
+    
 
-folder_path = 'C:/Users/Vincent/Downloads/Recording 1'
+# folder_path = 'C:/Users/Vincent/Downloads/Recording 1'
 # folder_path = "C:/Users/Vincent/Downloads/Recording 1/spikes_bin_1.csv"
 # folder_path = '/Users/vincent/Desktop/data Michael/Spike_bins/spikes_bin_1.csv' 
-# folder_path = "/Users/vincent/Desktop/data Michael/Spike_bins/Recording 1"
+folder_path = "/Users/vincent/Desktop/data Michael/Spike_bins/Recording 1/"
 array = csv_to_numpy(folder_path)
 
 action = input("voulez-vous voir un seul neurone ?")
-temps_debut = - 500
+temps_debut = - 1500
 incrementation = 50
 if action.lower() == "oui":
     neurone= input("quel est le neurone voulu ?")
     
     selected_row = array[:, int(neurone)]
-    x = generer_vecteur(len(selected_row), incrementation)
+    x = np.arange(len(selected_row))
     plt.plot(x, selected_row)
-    plt.xlabel('Temps [ms]')
-    plt.ylabel('Intensité du signal')
-    plt.savefig(f'neurone_{neurone}.png')
     plt.show()
     action = input("voulez-vous créer un nouveau csv pour ce neurone ?")
     if action == "oui":
@@ -203,7 +195,7 @@ if reduction_type.lower() == 'pca':
     variance = pca.explained_variance_ratio_ * 100
     plot_pca_variance(variance)
 
-    # reduction = input("combien de dimension voulez-vous conserver ?")
+    reduction = input("combien de dimension voulez-vous conserver ?")
     reduction = 3
     # Réduire les données à X dimensions
     pca = PCA(n_components=int(reduction))
@@ -227,7 +219,7 @@ if reduction_type.lower() == 'pca':
     #         spamwriter = csv.writer(csvfile, delimiter=',')
     #         spamwriter.writerow(data_transformed)
 
-    # action = input("voulez vous voir la visualisation 3D ?")
+    action = input("voulez vous voir la visualisation 3D ?")
     action = 'oui'
     if action.lower() == "oui":
         if psth is None:
@@ -236,22 +228,19 @@ if reduction_type.lower() == 'pca':
             for dimension in range(matrix.T.shape[1]):
                 all_data = process_folder_for_psth(folder_path, dimension,matrix.T)
                 psth_results = da.PSTH(all_data)
-                plot_psth(psth_results,dimension,temps_debut, incrementation, pca=True)
+                # plot_psth(psth_results,dimension)
                 psth.append(psth_results)
         fig = plt.figure()
-        
         ax = fig.add_subplot(111, projection='3d')
         ax.plot(psth[0][1], psth[1][1], psth[2][1], label='Mean Trajectory')
         mean_trajectory = np.array([psth[0][1], psth[1][1], psth[2][1]])  # Une matrice 3 x N des points de la trajectoire moyenne
         
-    
-
         # Personnaliser le graphique
         ax.set_xlabel('PCA 1')
         ax.set_ylabel('PCA 2')
         ax.set_zlabel('PCA 3')
         ax.legend()
-        plt.savefig('pca_3d.png')
+
         plt.show()
         
 if reduction_type.lower() == 'umap':

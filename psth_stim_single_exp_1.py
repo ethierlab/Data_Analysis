@@ -3,13 +3,14 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-chan_events = "2" # Enter the channel name for the Events
+chan_events = "3" # Enter the channel name for the Events
 Signal_psth = "1"  # Enter the channel name for the PSTH
 t_inf = 0.005 # (seconds) Enter time value before stimulation
 t_supp = 0.015 # (seconds) Enter time value after stimulation
 path_donnees= "/Users/freddydagenais/Desktop/Maitrise/code/255/exp1/csv"
 path_saving = "/Users/freddydagenais/Desktop/Maitrise/code/255/exp1/csv/psth" # Chemin ou tu veux save tes données
-
+path_donnees = "/Users/vincent/Desktop/fred/235"
+path_saving = "/Users/vincent/Desktop/fred/235/psth" # Chemin ou tu veux save tes données
 def csv_to_np_arrays(file_path):
     """
     Reads a CSV file and converts each column into a separate NumPy array.
@@ -135,7 +136,7 @@ for file_name in files:
         index = find_event_index(events)
         sample = cut_individual_event(t_inf, t_supp, index, y_sig, freq)
         plot_psth(t_inf,t_supp,*da.PSTH(sample), len(sample), PATH[PATH.rfind("/")+1:-4])
-        plt.savefig(f'{file_name[:-4]}.svg',dpi=700)
+        # plt.savefig(f'{file_name[:-4]}.png',dpi=700)
         plt.show()
         data = da.generate_PSTH_data(sample, t_inf, t_supp)
         filename = PATH[PATH.rfind("/")+1:-4] + "_PSTH.csv"

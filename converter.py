@@ -22,5 +22,5 @@ if __name__ == '__main__':
     # print(os.path.exists("/Users/freddydagenais/Desktop/Maitrise/code/235/electrique/exp1"))
     #oublies pas de rajouter un "/" post path
 
-    directory = "/Users/freddydagenais/Desktop/Maitrise/code/255/exp1"
+    directory = "/Users/vincent/Desktop/fred/230/Droit"
     convert_txt_to_csv(directory)
