@@ -256,6 +256,3 @@ if reduction_type.lower() == 'umap':
     ax.set_zlabel('PC3')
     plt.title('Visualisation 3D avec UMAP')
     plt.show()
-
-    
-    

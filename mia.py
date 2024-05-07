@@ -40,6 +40,7 @@ def cut_individual_event(t_inf, t_supp, peak_index:list, brain_stim:list, freque
 def read_column(folder_path, stim_path):
     channel_columns = []
     for filename in os.listdir(folder_path):
+        print(filename)
         if filename == stim_path.split('/')[-1]:
             file_path = os.path.join(folder_path, filename)
             df = pd.read_csv(file_path)
@@ -84,35 +85,34 @@ def map_events_to_time_bins(event_times, time_bins):
     
     return closest_indices.tolist()
 
-def plot_psth(psth_results, dimension, temps_debut, incrementation,pca=False):
-    psth_low, psth_mean, psth_high = psth_results
-    indices = np.arange(temps_debut, temps_debut + len(psth_mean) * incrementation, incrementation)
-    plt.plot(indices, psth_mean, color='black')
+def plot_psth(t_inf, t_supp, psth_low, psth_mean, psth_high, nb_samp):
+    time = np.linspace(-t_inf, t_supp, len(psth_mean))
+
+    plt.plot(time, psth_mean, color='black')
     
-    # Dessiner les courbes pour les bornes inférieures et supérieures en mode invisible
-    plt.plot(indices, psth_low, color='none')
-    plt.plot(indices, psth_high, color='none')
+    # Dessiner les deux premières courbes invisibles
+    plt.plot(time, psth_low, color='none')
+    plt.plot(time, psth_high, color='none')
 
-    # Remplir l'espace entre les courbes de bornes inférieures et supérieures
-    plt.fill_between(indices, psth_low, psth_high, color='red', alpha=0.5)
+    # Remplir l'espace entre les deux courbes invisibles
+    plt.fill_between(time, psth_low, psth_high, color='red', alpha=0.5)
 
-    # Dessiner à nouveau la courbe moyenne pour qu'elle soit bien visible
-    plt.plot(indices, psth_mean, color='red')
-
-    # Ajout des titres et des étiquettes
-    
-    plt.title(f'PSTH for PCA {dimension + 1}')
-    plt.xlabel('Time')
-    plt.ylabel('Signal intensity')
+    # Dessiner la troisième courbe visible
+    plt.plot(time, psth_mean, color='red')
 
     # Afficher le graphique
-    plt.show()
+    plt.title(f'PSTH with n = {nb_samp} samples')
+    plt.xlabel('Time [s]')
+    plt.ylabel('Signal Intensity')
+    
 
-folder_path = "/Users/vincent/Desktop/Mia/219CSV Spike Database/"
-stim_path = "/Users/vincent/Desktop/Mia/219CSV Spike Database/219_Ane_Stim_t"
+folder_path = "/Users/vincent/Desktop/Mia/219_dataset_50ms"
+stim_path = "/Users/vincent/Desktop/Mia/219_dataset_50ms/219_Ane_Stim_t.csv"
 array, stim_list = read_column(folder_path,stim_path)
 step_size = 0.05
 total_duration = (len(array[0]) - 1) * step_size
+for elem in array:
+    print(len(elem))
 
 array = np.array(array)
 # print(np.arange(0, total_duration + step_size, step_size))
@@ -137,10 +137,9 @@ print(data_cut.shape)
 psth = []
 for i in range(data_cut.shape[2]):
     slice_2d = data_cut[:, :, i]
-    # Assuming da.PSTH() can process this (59, 61) slice directly
     psth_result = da.PSTH(slice_2d)
     psth.append(psth_result)
-
+print(psth_result)
 premier_point_couleur = 'green'
 point_specifique_couleur = 'blue'
 dernier_point_couleur = 'red'
@@ -161,10 +160,12 @@ ax.set_ylabel('PCA 2')
 ax.set_zlabel('PCA 3')
 ax.legend()
 
+plt.savefig("3d_proj.svg",format='svg')
 plt.show()
+plt.clf()
 
-
-psth_results = da.PSTH(data_cut)
-print(np.array(psth_results).shape)
-
-da.plot_psth(1,2,*psth_results,len(data_cut))
+for i in range(reduction):
+    plot_psth(1,2,psth[i][0], psth[i][1], psth[i][2],len(psth[i]))
+    plt.savefig(f"psth_dim_{i+1}.svg", format='svg')
+    plt.show()
+    plt.clf()
