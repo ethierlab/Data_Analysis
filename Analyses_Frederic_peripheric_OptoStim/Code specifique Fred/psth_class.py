@@ -40,8 +40,7 @@ class Psth:
         self.typeStim = typeStim
         self.psth_time = []
         self.signal_channel_gain = 1
-        self.borneTemp = [[0, 0.0075], [0.0075, 0.015], [0, 0.025]]
-        self.borneTemp = [[0.0015, 0.025]]
+        self.borneTemp = [[0.0015, 0.025]] # self.borneTemp = [[0, 0.0075], [0.0075, 0.015], [0, 0.025]] pour 3 bornes sur le meme graphique
         self.peak2peak_amp = []
         self.statsEmg = {}
         self.statsForce = {}
@@ -58,8 +57,8 @@ class Psth:
           
     def loadDataFromDir(self, preFileNameChara = "_", postFileNameChara = "ma"):
         """ Read the 'adi' file in the folder. 1 file, 1 recording, 1 condition, 1 signal channel and 1 event channel(stim)
-            Extract the stimulation curent amplitude value in the file name, base on pre and post File character. If only one file
-            in folder : 
+            Extract the stimulation curent amplitude value in the file name, base on pre and post File character "_". More than one file
+            each file only one block 
         """
             ## # All id numbering is 1 based, first channel, first block
             # When indexing in Python we need to shift by 1 for 0 based indexing
@@ -176,7 +175,7 @@ class Psth:
    
     def loadLabchartFromDir(self):
         """ Read the 'adi' file in the folder. Only one labchart file in the directory for calibration or paramètre optimaux.
-        Pas fait pour experience 1
+        Plusieurs bloc dans un seul fichier labchart.
         """
             ## # All id numbering is 1 based, first channel, first block
             # When indexing in Python we need to shift by 1 for 0 based indexing
@@ -205,7 +204,7 @@ class Psth:
         for i in range(len(adi_out)):
             record = adi_out[i]
             for channel in range(record.n_channels):
-                for bloc in range(record.n_records):
+                for bloc in range(record.n_records): # au minimum un bloc
                     self.c_data[(channel,bloc)] =  record.channels[channel].get_data(bloc+1)
                     
             

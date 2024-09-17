@@ -108,32 +108,31 @@ if __name__ == "__main__":
     b = calibration.calibrationSenseur["intercept"] # ordonnée a l'origine de la calibration force
     
      #--------CALIBRATION DU CAPTEUR FORCE-100Grammes---------------
-    dir_path = "C:/Users/Maxime/Desktop/FredericD/Calibration2/"
-    calibration = P.Psth(dir_path, "elect") # fournir (dossier chemin ou "", type de stim : "elect" ou "opto" )
-    calibration.loadLabchartFromDir()
-    calibration.calibrationForceVoltage(2,[0, 7.4, 8.6, 13.6, 23.6, 43.6, 63.6, 83.6, 103.6]) # basé sur calibration faite le 25 juin 24
-    m = calibration.calibrationSenseur["slope"] # pente de la calibration force
-    b = calibration.calibrationSenseur["intercept"] # ordonnée a l'origine de la calibration force
+    # dir_path = "C:/Users/Maxime/Desktop/FredericD/Calibration2/"
+    # calibration = P.Psth(dir_path, "elect") # fournir (dossier chemin ou "", type de stim : "elect" ou "opto" )
+    # calibration.loadLabchartFromDir()
+    # calibration.calibrationForceVoltage(2,[0, 7.4, 8.6, 13.6, 23.6, 43.6, 63.6, 83.6, 103.6]) # basé sur calibration faite le 25 juin 24
+    # m = calibration.calibrationSenseur["slope"] # pente de la calibration force
+    # b = calibration.calibrationSenseur["intercept"] # ordonnée a l'origine de la calibration force
     
 
 
-    # dir_path = "Z:/Projects/optogenetic_periph/279/opto_droit/exp1"
-    # psth1 = P.Psth(dir_path, "opto") # fournir (dossier chemin ou "", type de stim : "elect" ou "opto" )
-    # psth1.loadDataFromDir("_","ma") # fournir (préfixe, sufixe) entourant la valeure de stim introduite dans fichier !!! doit changer nom de fonction si
-    # # 1 seul fichier dans dossier (exp 2 et 3 non programmé)
-    # psth1.calibrationSenseur = calibration.calibrationSenseur
-    # psth1.fromChannel2Psth(0.01, 0.025, 1, 2, OnePulsePerEvent = True) # fournir : (t_inf, t_supp, canal signal, canal événement)
-    # psth1.showAllPsth("") # fournir : ((rangée par, colonne de graphiques), le fichier où sera sauvegardé la figure ou rien(""))
-    # psth1.peak2peak("")  # fournir : (le fichier où sera sauvegardé la figure ou rien(""))
-    # psth1.fromChannel2PsthRectEmg(0.05, 0.2, 1, 2, OnePulsePerEvent = True) # inclut la latence dans le calcul
-    # psth1.showAllPsth("")
-    # psth1.courbeRecrutement([0, 0.2], "EMG rectifie","")
-    # psth1.fromChannel2PsthForce(0.05, 0.2, 3, 2, OnePulsePerEvent = True)
-    # psth1.showAllPsth("")
-    # psth1.courbeRecrutement([0, 0.2], "Force","")
+    dir_path = "Z:/Projects/optogenetic_periph/279/opto_droit/exp1"
+    psth1 = P.Psth(dir_path, "opto") # fournir (dossier chemin ou "", type de stim : "elect" ou "opto" )
+    psth1.loadDataFromDir("_","ma") # fournir (préfixe, sufixe) entourant la valeure de stim introduite dans fichier !!! doit changer nom de fonction si
+    # 1 seul fichier dans dossier (exp 2 et 3 non programmé)
+    psth1.calibrationSenseur = calibration.calibrationSenseur
+    psth1.fromChannel2Psth(0.01, 0.025, 1, 2, OnePulsePerEvent = True) # fournir : (t_inf, t_supp, canal signal, canal événement)
+    psth1.showAllPsth("") # fournir : ((rangée par, colonne de graphiques), le fichier où sera sauvegardé la figure ou rien(""))
+    psth1.peak2peak("")  # fournir : (le fichier où sera sauvegardé la figure ou rien(""))
+    psth1.fromChannel2PsthRectEmg(0.05, 0.2, 1, 2, OnePulsePerEvent = True) # inclut la latence dans le calcul
+    psth1.showAllPsth("")
+    psth1.courbeRecrutement([0, 0.2], "EMG rectifie","")
+    psth1.fromChannel2PsthForce(0.05, 0.2, 3, 2, OnePulsePerEvent = True)
+    psth1.showAllPsth("")
+    psth1.courbeRecrutement([0, 0.2], "Force","")
     
 
-    #dir_path = "C:/Users/Maxime/Desktop/FredericD/324/elec_gauche/exp1"
     # dir_path = "Z:/Projects/optogenetic_periph/324/opto_droit/exp1"
     # psth2 = P.Psth(dir_path, "elect") # fournir (dossier chemin ou "", type de stim : "elect" ou "opto" )
     # psth2.loadDataFromDir("_","ma") # fournir (préfixe, sufixe) entourant la valeure de stim introduite dans fichier !!! doit changer nom de fonction si
@@ -152,21 +151,21 @@ if __name__ == "__main__":
     # psth2.showAllPsth("")
     # psth2.courbeRecrutement([0, 0.2], "Force","")#
     
-    dir_path = "Z:/Projects/optogenetic_periph/324/elec_droit/exp1_1"
-    psth2 = P.Psth(dir_path, "elect") # fournir (dossier chemin ou "", type de stim : "elect" ou "opto" )
-    psth2.loadDataFromDir("_","ma") # fournir (préfixe, sufixe) entourant la valeure de stim introduite dans fichier !!! doit changer nom de fonction si
-    # seul fichier dans dossier (exp 2 et 3 non programmé)
-    psth2.calibrationSenseur = calibration.calibrationSenseur
-    psth2.fromChannel2Psth(0.01, 0.025, 1, 2, OnePulsePerEvent = True) # fournir : (t_inf, t_supp, canal signal, canal événement)
-    psth2.showAllPsth("") # fournir : ((rangée par, colonne de graphiques), le fichier où est sauvegardé la figure ou rien(""))
-    psth2.peak2peak("")  # fournir : (le fichier où est sauvegardé la figure ou rien(""))
-    psth2.courbeRecrutement([0, 0.2], "Peak to peak","")
-    #showRawData(psth2,calibration)
+    # dir_path = "Z:/Projects/optogenetic_periph/324/elec_droit/exp1_1"
+    # psth2 = P.Psth(dir_path, "elect") # fournir (dossier chemin ou "", type de stim : "elect" ou "opto" )
+    # psth2.loadDataFromDir("_","ma") # fournir (préfixe, sufixe) entourant la valeure de stim introduite dans fichier !!! doit changer nom de fonction si
+    # # seul fichier dans dossier (exp 2 et 3 non programmé)
+    # psth2.calibrationSenseur = calibration.calibrationSenseur
+    # psth2.fromChannel2Psth(0.01, 0.025, 1, 2, OnePulsePerEvent = True) # fournir : (t_inf, t_supp, canal signal, canal événement)
+    # psth2.showAllPsth("") # fournir : ((rangée par, colonne de graphiques), le fichier où est sauvegardé la figure ou rien(""))
+    # psth2.peak2peak("")  # fournir : (le fichier où est sauvegardé la figure ou rien(""))
+    # psth2.courbeRecrutement([0, 0.2], "Peak to peak","")
+    # #showRawData(psth2,calibration)
 
-    psth2.fromChannel2PsthRectEmg(0.05, 0.2, 1, 2, OnePulsePerEvent = True)
-    psth2.showAllPsth("")
-    psth2.courbeRecrutement([0, 0.2], "EMG rectifie","")
-    psth2.fromChannel2PsthForce(0.05, 0.2, 3, 2, OnePulsePerEvent = True)
-    psth2.showAllPsth("")
-    psth2.courbeRecrutement([0, 0.2], "Force","")# 
+    # psth2.fromChannel2PsthRectEmg(0.05, 0.2, 1, 2, OnePulsePerEvent = True)
+    # psth2.showAllPsth("")
+    # psth2.courbeRecrutement([0, 0.2], "EMG rectifie","")
+    # psth2.fromChannel2PsthForce(0.05, 0.2, 3, 2, OnePulsePerEvent = True)
+    # psth2.showAllPsth("")
+    # psth2.courbeRecrutement([0, 0.2], "Force","")# 
     
