@@ -138,7 +138,7 @@ if __name__ == "__main__":
     psth1.fromChannel2PsthForce(0.005, 0.110, 3, 2, OnePulsePerEvent = True)
     psth1.showAllPsth("")
     psth1.courbeRecrutement([0, 0.2], "Force","") # Fait les calculs sur l'étendu fourni au 1er argument
-    
+    psth1.latenceVsEmg(True, False, True) # (first pulse by train, showplotlatence all stim, showplot result)
 
     # dir_path = "Z:/Projects/optogenetic_periph/324/opto_droit/exp1"
     # psth2 = P.Psth(dir_path, "elect") # fournir (dossier chemin ou "", type de stim : "elect" ou "opto" )
