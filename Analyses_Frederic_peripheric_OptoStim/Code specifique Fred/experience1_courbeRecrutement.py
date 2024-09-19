@@ -129,15 +129,15 @@ if __name__ == "__main__":
     psth1.loadDataFromDir("_","ma") # fournir (préfixe, sufixe) entourant la valeure de stim introduite dans fichier !!! doit changer nom de fonction si
     # 1 seul fichier dans dossier (exp 2 et 3 non programmé)
     psth1.calibrationSenseur = calibration.calibrationSenseur
-    psth1.fromChannel2Psth(0.01, 0.025, 1, 2, OnePulsePerEvent = True) # fournir : (t_inf, t_supp, canal signal, canal événement)
+    psth1.fromChannel2Psth(0.005, 0.025, 1, 2, OnePulsePerEvent = True) # fournir : (t_inf, t_supp, canal signal, canal événement)
     psth1.showAllPsth("") # fournir : ((rangée par, colonne de graphiques), le fichier où sera sauvegardé la figure ou rien(""))
     psth1.peak2peak("")  # fournir : (le fichier où sera sauvegardé la figure ou rien(""))
-    psth1.fromChannel2PsthRectEmg(0.05, 0.110, 1, 2, OnePulsePerEvent = True) # inclut la latence dans le calcul
+    psth1.fromChannel2PsthRectEmg(0.005, 0.110, 1, 2, OnePulsePerEvent = True) # inclut la latence dans le calcul
     psth1.showAllPsth("")
-    psth1.courbeRecrutement([0, 0.2], "EMG rectifie","")
-    psth1.fromChannel2PsthForce(0.05, 0.110, 3, 2, OnePulsePerEvent = True)
+    psth1.courbeRecrutement([0, 0.2], "EMG rectifie","") # Fait les calculs sur l'étendu fourni au 1er argument
+    psth1.fromChannel2PsthForce(0.005, 0.110, 3, 2, OnePulsePerEvent = True)
     psth1.showAllPsth("")
-    psth1.courbeRecrutement([0, 0.2], "Force","")
+    psth1.courbeRecrutement([0, 0.2], "Force","") # Fait les calculs sur l'étendu fourni au 1er argument
     
 
     # dir_path = "Z:/Projects/optogenetic_periph/324/opto_droit/exp1"
