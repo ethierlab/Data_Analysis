@@ -638,10 +638,14 @@ def cut_individual_event(t_inf, t_supp, peak_index:list, brain_stim:list, freque
 
     for val in peak_index:
         if val - inf_offset < 0 and val == min(peak_index):
-            raise ValueError("Warning! The time before the events is too large. Change the t_inf parameter.")
-        
+            difference = round(val - inf_offset,3)
+            messageError = "Warning! The time before the events is too large by " + difference +"Change the t_inf parameter."
+            raise ValueError(messageError)
+
         if val + supp_offset + 1 > len(brain_stim):
-            raise ValueError("Warning! The time after the events is too large. Change the t_supp parameter.")
+            difference = str(round(((val + supp_offset + 1) - len(brain_stim))/frequency,3))
+            messageError = "Warning! The time after the events is too large by " + difference +" Change the t_supp parameter."
+            raise ValueError(messageError)
 
         stim_cut.append(brain_stim[val - inf_offset : val + supp_offset + 1])
 

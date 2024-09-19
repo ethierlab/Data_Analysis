@@ -217,8 +217,6 @@ class Psth:
            
         """
 
-        # Si le canal doit etre l'emg rectifié ou la force
-
         min_max=[0,0]
         psth_compil = []
         
@@ -279,7 +277,7 @@ class Psth:
                 index = da.takeFirstPeak(index, .2, .5, self.freq)
             
             # Rectification du signal
-            self.rectEmg(signal_channel, index, 2, showPlot = False, emg_max_latency = 0.015, thresholdMinEmg = 0.1)
+            self.rectEmg(signal_channel, index, 2, showPlot = False, emg_max_latency = 0.025, thresholdMinEmg = 0.1)
             sample = da.cut_individual_event(t_inf, t_supp, index, self.statsEmg["RectSignal"], self.freq)
             min_psth, moy_psth, max_psth = da.PSTH(sample)
             mini = min(moy_psth)
@@ -577,8 +575,13 @@ class Psth:
         ""
         p0 = [max(ydata), np.median(xdata),1,min(ydata)] # les paramètres initiaux.[L, x0, k, b] : L le max de la courbe, b : offset en y, k scaling input, x0 :
         # la moitié du output
-        popt, pcov = curve_fit(self.sigmoid, xdata, ydata, p0, method='lm')
-        self.paraSigmoid = popt
+        try :
+            popt, pcov = curve_fit(self.sigmoid, xdata, ydata, p0, method='lm')
+            self.paraSigmoid = popt
+        except RuntimeError :
+            self.paraSigmoid = [0, 0, 0, 0]
+
+        
         
     def findSigmoidYValue(self,pourcentageMax):
 
