@@ -98,14 +98,25 @@ def showRawData(psthObject, calibration, limiteSup):
 
 if __name__ == "__main__":
   
-    # 1 fichier à la fois :
-  #--------CALIBRATION DU CAPTEUR FORCE----------------
-    dir_path = "C:/Users/Maxime/Desktop/FredericD/Calibration/"
-    calibration = P.Psth(dir_path, "elect") # fournir (dossier chemin ou "", type de stim : "elect" ou "opto" )
-    calibration.loadLabchartFromDir()
-    calibration.calibrationForceVoltage(2,[0, 50, 55, 60, 70, 90, 110, 130]) # basé sur calibration faite le 25 juin 24
-    m = calibration.calibrationSenseur["slope"] # pente de la calibration force
-    b = calibration.calibrationSenseur["intercept"] # ordonnée a l'origine de la calibration force
+    capteur = 500
+    
+    if capteur == 500:
+        #--------CALIBRATION DU CAPTEUR FORCE-500Grammes---------------
+        dir_path = "T:/Projects/optogenetic_periph/Calibration1/"
+        calibration = P.Psth(dir_path, "elect") # fournir (dossier chemin ou "", type de stim : "elect" ou "opto" )
+        calibration.loadLabchartFromDir()
+        calibration.calibrationForceVoltage(2,[0, 50, 55, 60, 70, 90, 110, 130]) # basé sur calibration faite le 25 juin 24
+        m = calibration.calibrationSenseur["slope"] # pente de la calibration force
+        b = calibration.calibrationSenseur["intercept"] # ordonnée a l'origine de la calibration force
+    
+    elif capteur == 100:
+        #--------CALIBRATION DU CAPTEUR FORCE-100Grammes---------------
+        dir_path = "T:/Projects/optogenetic_periph/Calibration1"
+        calibration = P.Psth(dir_path, "elect") # fournir (dossier chemin ou "", type de stim : "elect" ou "opto" )
+        calibration.loadLabchartFromDir()
+        calibration.calibrationForceVoltage(2,[0, 7.4, 8.6, 13.6, 23.6, 43.6, 63.6, 83.6, 103.6]) # basé sur calibration faite le 25 juin 24
+        m = calibration.calibrationSenseur["slope"] # pente de la calibration force
+        b = calibration.calibrationSenseur["intercept"] # ordonnée a l'origine de la calibration force
     
     dir_path = ""
     psth2 = P.Psth(dir_path, "elect") # fournir (dossier chemin ou "", type de stim : "elect" ou "opto" )

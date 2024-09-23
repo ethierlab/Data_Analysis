@@ -8,7 +8,6 @@ from scipy.sparse.linalg import spsolve
 import h5py
 import csv
 import os
-import pandas as pd
 from ipywidgets import interact, IntSlider, Button, VBox
 from IPython.display import display
 
@@ -137,37 +136,6 @@ def create_PSTH_CSV(input_csv_file, output_csv_file, data_to_append):
     except Exception as e:
         print(f"An error occurred: {e}")
 
-
-def csv_to_np_arrays(file_path):
-    """
-    Reads a CSV file and converts each column into a separate NumPy array.
-
-    Parameters:
-    - file_path (str): The path to the CSV file to be read.
-
-    The function reads the CSV file, skipping the first 7 rows, and iterates through each column,
-    converting it into a NumPy array. The resulting arrays are stored in a dictionary where the
-    keys are the column names, and the values are the corresponding NumPy arrays.
-
-    Note: The function assumes that the first 7 rows of the CSV file do not contain relevant data
-    and skips them. Make sure that this assumption aligns with the structure of your CSV file.
-
-    Returns:
-    - arrays_dict (dict): A dictionary where keys are the column names, and values are the corresponding
-      NumPy arrays.
-    """
-    # Read the CSV file with pandas, skipping the first 7 rows
-    df = pd.read_csv(file_path, skiprows=7)
-
-    # Initialize an empty dictionary to store arrays
-    arrays_dict = {}
-
-    # Iterate over each column
-    for column in df.columns:
-        # Convert column to numpy array and store in dictionary
-        arrays_dict[column] = df[column].to_numpy()
-
-    return arrays_dict
 
 
 

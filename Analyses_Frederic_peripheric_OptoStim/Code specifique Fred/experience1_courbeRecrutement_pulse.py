@@ -98,32 +98,25 @@ def showRawData(psthObject, calibration, limiteSup):
 
 if __name__ == "__main__":
   
-    # 1 fichier à la fois :
-     #--------CALIBRATION DU CAPTEUR FORCE-100Grammes---------------
-    dir_path = "C:/Users/Maxime/Desktop/FredericD/Calibration2/"
-    calibration = P.Psth(dir_path, "elect") # fournir (dossier chemin ou "", type de stim : "elect" ou "opto" )
-    calibration.loadLabchartFromDir()
-    calibration.calibrationForceVoltage(2,[0, 7.4, 8.6, 13.6, 23.6, 43.6, 63.6, 83.6, 103.6]) # basé sur calibration faite le 25 juin 24
-    m = calibration.calibrationSenseur["slope"] # pente de la calibration force
-    b = calibration.calibrationSenseur["intercept"] # ordonnée a l'origine de la calibration force
+    capteur = 500
     
-
-    # dir_path = "Z:/Projects/optogenetic_periph/324/opto_droit/exp2"
-    # psth2 = P.Psth(dir_path, "opto") # fournir (dossier chemin ou "", type de stim : "elect" ou "opto" )
-    # psth2.loadDataFromDir("_","ms") # fournir (préfixe, sufixe) entourant la valeure de stim introduite dans fichier !!! doit changer nom de fonction si
-    # # seul fichier dans dossier (exp 2 et 3 non programmé)
-    # psth2.calibrationSenseur = calibration.calibrationSenseur
-    # psth2.fromChannel2Psth(0.01, 0.025, 1, 2, OnePulsePerEvent = True) # fournir : (t_inf, t_supp, canal signal, canal événement)
-    # psth2.showAllPsthPulse("") # fournir : ((rangée par, colonne de graphiques), le fichier où est sauvegardé la figure ou rien(""))
-    # psth2.peak2peakPulse("")  # fournir : (le fichier où est sauvegardé la figure ou rien(""))
-    # psth2.courbeRecrutementPulse([0, 0.2], "Peak to peak","")
-    # psth2.fromChannel2PsthRectEmg(0.05, 0.2, 1, 2, OnePulsePerEvent = True)
-    # psth2.showAllPsthPulse("")
-    # psth2.courbeRecrutementPulse([0, 0.2], "EMG rectifie","")
-    # psth2.fromChannel2PsthForce(0.05, 0.2, 3, 2, OnePulsePerEvent = True)
-    # psth2.showAllPsthPulse("")
-    # psth2.courbeRecrutementPulse([0, 0.2], "Force","")#
+    if capteur == 500:
+        #--------CALIBRATION DU CAPTEUR FORCE-500Grammes---------------
+        dir_path = "T:/Projects/optogenetic_periph/Calibration1/"
+        calibration = P.Psth(dir_path, "elect") # fournir (dossier chemin ou "", type de stim : "elect" ou "opto" )
+        calibration.loadLabchartFromDir()
+        calibration.calibrationForceVoltage(2,[0, 50, 55, 60, 70, 90, 110, 130]) # basé sur calibration faite le 25 juin 24
+        m = calibration.calibrationSenseur["slope"] # pente de la calibration force
+        b = calibration.calibrationSenseur["intercept"] # ordonnée a l'origine de la calibration force
     
+    elif capteur == 100:
+        #--------CALIBRATION DU CAPTEUR FORCE-100Grammes---------------
+        dir_path = "T:/Projects/optogenetic_periph/Calibration2"
+        calibration = P.Psth(dir_path, "elect") # fournir (dossier chemin ou "", type de stim : "elect" ou "opto" )
+        calibration.loadLabchartFromDir()
+        calibration.calibrationForceVoltage(2,[0, 7.4, 8.6, 13.6, 23.6, 43.6, 63.6, 83.6, 103.6]) # basé sur calibration faite le 25 juin 24
+        m = calibration.calibrationSenseur["slope"] # pente de la calibration force
+        b = calibration.calibrationSenseur["intercept"] # ordonnée a l'origine de la calibration force
     
     dir_path = "Z:/Projects/optogenetic_periph/324/elec_droit/exp2"
     psth2 = P.Psth(dir_path, "opto") # fournir (dossier chemin ou "", type de stim : "elect" ou "opto" )

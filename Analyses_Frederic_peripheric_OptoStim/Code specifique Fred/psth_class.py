@@ -77,31 +77,30 @@ class Psth:
         adi_out = []
 
         if (postFileNameChara == "ma"):
-            match n_files:
-                case 0:
-                    print("Error no files to analyse")
-                case 1:
-                    if files[0].endswith(".adicht"):
-                        txt_path = os.path.join(self.path, files[0])
-                        ind1 = files[0].rfind(preFileNameChara)
-                        ind2 = files[0].rindex(postFileNameChara)
-                        courant_val.append(float(files[0][ind1+1:ind2]))
+            if n_files == 0:
+                print("Error no files to analyse")
+            elif n_files == 1:
+                if files[0].endswith(".adicht"):
+                    txt_path = os.path.join(self.path, files[0])
+                    ind1 = files[0].rfind(preFileNameChara)
+                    ind2 = files[0].rindex(postFileNameChara)
+                    courant_val.append(float(files[0][ind1+1:ind2]))
+                    f = adi.read_file(txt_path)
+                    adi_out.append(f)
+                else:
+                    print("Error no labchart files to analyse")
+
+            else:
+                for file_name in files:
+                    if file_name.endswith(".adicht"):
+                        txt_path = os.path.join(self.path, file_name)
+                        ind1 = file_name.rfind(preFileNameChara)
+                        ind2 = file_name.rindex(postFileNameChara)
+                        courant_val.append(float(file_name[ind1+1:ind2]))
                         f = adi.read_file(txt_path)
                         adi_out.append(f)
                     else:
-                        print("Error no labchart files to analyse")
-
-                case _:
-                    for file_name in files:
-                        if file_name.endswith(".adicht"):
-                            txt_path = os.path.join(self.path, file_name)
-                            ind1 = file_name.rfind(preFileNameChara)
-                            ind2 = file_name.rindex(postFileNameChara)
-                            courant_val.append(float(file_name[ind1+1:ind2]))
-                            f = adi.read_file(txt_path)
-                            adi_out.append(f)
-                        else:
-                            print("Error at least one file is not a labchart one")
+                        print("Error at least one file is not a labchart one")
                     
             
             self.adi_out = adi_out
@@ -111,31 +110,30 @@ class Psth:
             pulse = []
             adi_out = []
 
-            match n_files:
-                case 0:
-                    print("Error no files to analyse")
-                case 1:
-                    if files[0].endswith(".adicht"):
-                        txt_path = os.path.join(self.path, files[0])
-                        ind1 = files[0].rfind(preFileNameChara)
-                        ind2 = files[0].rindex(postFileNameChara)
-                        pulse.append(float(files[0][ind1+1:ind2]))
+            if n_files == 0:
+                print("Error no files to analyse")
+            elif n_files == 1:
+                if files[0].endswith(".adicht"):
+                    txt_path = os.path.join(self.path, files[0])
+                    ind1 = files[0].rfind(preFileNameChara)
+                    ind2 = files[0].rindex(postFileNameChara)
+                    pulse.append(float(files[0][ind1+1:ind2]))
+                    f = adi.read_file(txt_path)
+                    adi_out.append(f)
+                else:
+                    print("Error no labchart files to analyse")
+
+            else:
+                for file_name in files:
+                    if file_name.endswith(".adicht"):
+                        txt_path = os.path.join(self.path, file_name)
+                        ind1 = file_name.rfind(preFileNameChara)
+                        ind2 = file_name.rindex(postFileNameChara)
+                        pulse.append(float(file_name[ind1+1:ind2]))
                         f = adi.read_file(txt_path)
                         adi_out.append(f)
                     else:
-                        print("Error no labchart files to analyse")
-
-                case _:
-                    for file_name in files:
-                        if file_name.endswith(".adicht"):
-                            txt_path = os.path.join(self.path, file_name)
-                            ind1 = file_name.rfind(preFileNameChara)
-                            ind2 = file_name.rindex(postFileNameChara)
-                            pulse.append(float(file_name[ind1+1:ind2]))
-                            f = adi.read_file(txt_path)
-                            adi_out.append(f)
-                        else:
-                            print("Error at least one file is not a labchart one")
+                        print("Error at least one file is not a labchart one")
                     
             self.adi_out = adi_out
             self.pulseWidth = pulse
@@ -144,31 +142,30 @@ class Psth:
             frequence = []
             adi_out = []
 
-            match n_files:
-                case 0:
-                    print("Error no files to analyse")
-                case 1:
-                    if files[0].endswith(".adicht"):
-                        txt_path = os.path.join(self.path, files[0])
-                        ind1 = files[0].rfind(preFileNameChara)
-                        ind2 = files[0].rindex(postFileNameChara)
-                        frequence.append(float(files[0][ind1+1:ind2]))
+            if n_files == 0:
+                print("Error no files to analyse")
+            elif n_files == 1:
+                if files[0].endswith(".adicht"):
+                    txt_path = os.path.join(self.path, files[0])
+                    ind1 = files[0].rfind(preFileNameChara)
+                    ind2 = files[0].rindex(postFileNameChara)
+                    frequence.append(float(files[0][ind1+1:ind2]))
+                    f = adi.read_file(txt_path)
+                    adi_out.append(f)
+                else:
+                    print("Error no labchart files to analyse")
+
+            else:
+                for file_name in files:
+                    if file_name.endswith(".adicht"):
+                        txt_path = os.path.join(self.path, file_name)
+                        ind1 = file_name.rfind(preFileNameChara)
+                        ind2 = file_name.rindex(postFileNameChara)
+                        frequence.append(float(file_name[ind1+1:ind2]))
                         f = adi.read_file(txt_path)
                         adi_out.append(f)
                     else:
-                        print("Error no labchart files to analyse")
-
-                case _:
-                    for file_name in files:
-                        if file_name.endswith(".adicht"):
-                            txt_path = os.path.join(self.path, file_name)
-                            ind1 = file_name.rfind(preFileNameChara)
-                            ind2 = file_name.rindex(postFileNameChara)
-                            frequence.append(float(file_name[ind1+1:ind2]))
-                            f = adi.read_file(txt_path)
-                            adi_out.append(f)
-                        else:
-                            print("Error at least one file is not a labchart one")
+                        print("Error at least one file is not a labchart one")
                     
             self.adi_out = adi_out
             self.frequence = frequence
@@ -189,18 +186,15 @@ class Psth:
         n_files = len(files)
         adi_out = []
         
-        match n_files:
-            case 0: # if no file
-                print("Error no files to analyse")
-            case 1: # one file available
-                if files[0].endswith(".adicht"):
-                    txt_path = os.path.join(self.path, files[0])
-                    
-                    f = adi.read_file(txt_path)
-                    adi_out.append(f) # Output of adi read
-                    
-                else:
-                    print("Error no labchart files to analyse")
+        if n_files == 0:
+            print("Error no files to analyse")
+        elif n_files == 1: # one file available
+            if files[0].endswith(".adicht"):
+                txt_path = os.path.join(self.path, files[0])
+                f = adi.read_file(txt_path)
+                adi_out.append(f) # Output of adi read
+            else:
+                print("Error no labchart files to analyse")
         for i in range(len(adi_out)):
             record = adi_out[i]
             for channel in range(record.n_channels):
