@@ -106,7 +106,7 @@ if __name__ == "__main__":
     
     if capteur == 500:
         #--------CALIBRATION DU CAPTEUR FORCE-500Grammes---------------
-        dir_path = "T:/Projects/optogenetic_periph/Calibration1/"
+        dir_path = "Z:/Projects/optogenetic_periph/Calibration1/"
         calibration = P.Psth(dir_path, "elect") # fournir (dossier chemin ou "", type de stim : "elect" ou "opto" )
         calibration.loadLabchartFromDir()
         calibration.calibrationForceVoltage(2,[0, 50, 55, 60, 70, 90, 110, 130]) # basé sur calibration faite le 25 juin 24
@@ -115,7 +115,7 @@ if __name__ == "__main__":
     
     elif capteur == 100:
         #--------CALIBRATION DU CAPTEUR FORCE-100Grammes---------------
-        dir_path = "T:/Projects/optogenetic_periph/Calibration2"
+        dir_path = "Z:/Projects/optogenetic_periph/Calibration2"
         calibration = P.Psth(dir_path, "elect") # fournir (dossier chemin ou "", type de stim : "elect" ou "opto" )
         calibration.loadLabchartFromDir()
         calibration.calibrationForceVoltage(2,[0, 7.4, 8.6, 13.6, 23.6, 43.6, 63.6, 83.6, 103.6]) # basé sur calibration faite le 25 juin 24
@@ -124,7 +124,7 @@ if __name__ == "__main__":
     
 
 
-    dir_path = "T:/Projects/optogenetic_periph/324/opto_droit/exp1"
+    dir_path = "Z:/Projects/optogenetic_periph/324/opto_droit/exp1"
     psth1 = P.Psth(dir_path, "opto") # fournir (dossier chemin ou "", type de stim : "elect" ou "opto" )
     psth1.loadDataFromDir("_","ma") # fournir (préfixe, sufixe) entourant la valeure de stim introduite dans fichier !!! doit changer nom de fonction si
     # 1 seul fichier dans dossier (exp 2 et 3 non programmé)
@@ -138,7 +138,7 @@ if __name__ == "__main__":
     psth1.fromChannel2PsthForce(0.005, 0.110, 3, 2, OnePulsePerEvent = True)
     psth1.showAllPsth("")
     psth1.courbeRecrutement([0, 0.2], "Force","") # Fait les calculs sur l'étendu fourni au 1er argument
-    psth1.latenceVsEmg(True, False, True) # (first pulse by train, showplotlatence all stim, showplot result)
+    psth1.latenceVsEmg(True, True, True) # (first pulse by train, showplotlatence all stim, showplot result)
 
     
     
