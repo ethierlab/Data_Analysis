@@ -11,7 +11,12 @@ import matplotlib.pyplot as plt
 
 # %% load and prepare some example data
 # load data for example cell
-with open("C:/Users/Maxime/Documents/GitHub/Data_Analysis/zetapy-master/zetapy/testNeuronZeta.csv", 'r') as f:
+path ="C:/Users/Maxime/Downloads/time_around_event_center_ch18_unit1.csv"
+# path ="C:/Users/Maxime/Documents/GitHub/Data_Analysis/zetapy-master/zetapy/testNeuronZeta.csv"
+#path = "C:/Users/Maxime/Desktop/simulaton_results3.csv"
+path = 'C:/Users/Maxime/Desktop/simulatonResultsInhibition.csv'
+path = 'C:/Users/Maxime/Desktop/simulatonResultsNeutre.csv'
+with open(path, 'r') as f:
     reader = csv.reader(f)
     data = list(reader)
 
