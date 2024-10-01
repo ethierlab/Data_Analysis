@@ -26,6 +26,7 @@ from scipy.stats import norm
 from scipy.signal import convolve
 import time
 
+
 # %% note on performance
 '''
 The code uses vectorization as much as possible, but since the ZETA-test is based on bootstraps, it
@@ -61,7 +62,7 @@ sStim = dLoad['sStim']
 vecStimulusStartTimes = sStim['StimOnTime'][0][0][0]  # unpacking Matlab array
 vecStimulusStopTimes = sStim['StimOffTime'][0][0][0]  # unpacking Matlab array
 vecOrientation = sStim['Orientation'][0][0][0]  # unpacking Matlab array
-
+print(type(vecStimulusStartTimes), vecStimulusStartTimes.shape,vecStimulusStartTimes)
 # %% calculate instantaneous firing rate without performing the ZETA-test
 # if we simply want to plot the neuron's response, we can use:
 vecTime, vecRate, dIFR = ifr(vecSpikeTimes1, vecStimulusStartTimes)
@@ -199,8 +200,8 @@ print(f"\nAre two neurons responding differently? (elapsed time: {dblElapsedT5:.
 
 
 # case 2a: is neuron 1 responding differently to gratings oriented at 0 and 90 degrees?
-vecTrials1 = vecOrientation==0;
-vecTrials2 = vecOrientation==90;
+vecTrials1 = vecOrientation==0
+vecTrials2 = vecOrientation==90
 print('\nRunning two-sample zeta-test on one neuron, different stimuli\n')
 t = time.time()
 dblZetaTwoSample2a,dZETA2a = zetatest2(vecSpikeTimes1,arrEventTimes[vecTrials1,:],vecSpikeTimes1,arrEventTimes[vecTrials2,:],
