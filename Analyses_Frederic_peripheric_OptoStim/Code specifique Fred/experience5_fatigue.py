@@ -43,24 +43,11 @@ if __name__ == "__main__":
     
 
 
-    dir_path = "Z:/Projects/optogenetic_periph/324/opto_droit/exp4"
-    fatigueFreq = P.Psth(dir_path, "opto") # fournir (dossier chemin ou "", type de stim : "elect" ou "opto" )
-    fatigueFreq.loadDataFromDir("_","hz") # fournir (préfixe, sufixe) entourant la valeure de stim introduite dans fichier !!! doit changer nom de fonction si
-    fatigueFreq.calibrationSenseur = calibration.calibrationSenseur # calibre la force 
+    dir_path = "Z:/Projects/optogenetic_periph/324/opto_droit/exp5"
+    fatigue = P.Psth(dir_path, "opto") # fournir (dossier chemin ou "", type de stim : "elect" ou "opto" )
+    fatigue.loadLabchartFromDir() # fournir (préfixe, sufixe) entourant la valeure de stim introduite dans fichier !!! doit changer nom de fonction si
+    fatigue.calibrationSenseur = calibration.calibrationSenseur # calibre la force 
 
-    fatigueFreq.fromChannel2PsthIntraTrain(0.005, 0.025, 1, 2, plot = True)
-    
-    
-    # psth1.fromChannel2Psth(0.005, 0.025, 1, 2, OnePulsePerEvent = True) # fournir : (t_inf, t_supp, canal signal, canal événement)
-    # psth1.showAllPsth("") # fournir : ((rangée par, colonne de graphiques), le fichier où sera sauvegardé la figure ou rien(""))
-    # psth1.peak2peak("")  # fournir : (le fichier où sera sauvegardé la figure ou rien(""))
-    # psth1.fromChannel2PsthRectEmg(0.005, 0.110, 1, 2, OnePulsePerEvent = True) # inclut la latence dans le calcul
-    # psth1.showAllPsth("")
-    # psth1.courbeRecrutement([0, 0.2], "EMG rectifie","") # Fait les calculs sur l'étendu fourni au 1er argument
-    # psth1.fromChannel2PsthForce(0.005, 0.110, 3, 2, OnePulsePerEvent = True)
-    # psth1.showAllPsth("")
-    # psth1.courbeRecrutement([0, 0.2], "Force","") # Fait les calculs sur l'étendu fourni au 1er argument
-    # psth1.latenceVsEmg(True, True, True) # (first pulse by train, showplotlatence all stim, showplot result)
-
-    
-    
+    #fatigue.fromChannel2PsthIntraTrainExp5(1, 2, 20, True)
+    fatigue.fromChannel2Psth(-0.5, 1, 1, 2, False)
+    fatigue.showAllPsth("")
