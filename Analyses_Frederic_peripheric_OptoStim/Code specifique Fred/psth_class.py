@@ -138,7 +138,7 @@ class Psth:
             self.adi_out = adi_out
             self.pulseWidth = pulse
         elif (postFileNameChara == "hz"):
-            # condition variable indépendante : intensité ms
+            # condition variable indépendante : intensité hz
             frequence = []
             adi_out = []
 
@@ -329,6 +329,91 @@ class Psth:
         self.t_supp = t_supp
         self.psth_compil = psth_compil
         self.min_max = min_max
+
+    def fromChannel2PsthIntraTrain(self, t_inf, t_supp, numberSignal, numberEvent, plot):
+        """ Fonction qui analyse la fatigue intra train selon la fréquence des pulses intra train. 
+        t_inf, t_supp : time in second before and after the event
+            numberSignal : channel number, numberEvent : event channel number
+            OnePulsePerEvent : True = each event is not a train. False = each event is a train, first spike took as onset
+           
+        """
+
+        min_max=[0,0]
+        psth_compil = []
+        
+        for fichier in range(len(self.adi_out)): # boucle fichier par fichier
+            record = self.adi_out[fichier]
+            for channel in range(record.n_channels):
+                for bloc in range(record.n_records):
+                    self.c_data[(channel,bloc)] =  record.channels[channel].get_data(bloc+1)
+                    
+            signal_channel=self.c_data[(numberSignal - 1, 0)] # Value associate to the channel bloc
+            event_channel=self.c_data[(numberEvent - 1, 0)] # Value associate to the channel bloc
+            signal_channel = signal_channel / self.signal_channel_gain
+            time = np.arange(len(signal_channel))
+            time  = time/self.freq
+            indexPulseEvent = da.find_event_index(event_channel, self.freq, self.select, self.time_window, self.experiment)
+            indexTrainEvent = da.takeFirstPeak(indexPulseEvent, .25, .5, self.freq) # second argument = min inter train and 3e = max intra train
+            
+            if plot:
+                x = range(len(event_channel))
+                plt.plot(x,event_channel,indexPulseEvent,event_channel[indexPulseEvent],"or",indexTrainEvent,event_channel[indexTrainEvent],"+g")
+                plt.title("Fréquence intra train : " + str(self.frequence[i]))
+                plt.show()
+
+        
+            # Calcul de l'amplitude du MEP sur une fenêtre restreinte de chaque stimulus. La position du pulse dans le train est considérée
+            # Structure des trains :
+            structTrain = []
+            indexArray = np.array(indexPulseEvent)
+            indexTrainEvent.append(indexPulseEvent[-1]+10000)
+            
+            for i in range(len(indexTrainEvent)-1):
+                deb = indexTrainEvent[i]
+                fin = indexTrainEvent[i+1]
+                linVect = np.where(np.logical_and(indexArray >= deb, indexArray < fin))
+                structTrain.append(indexPulseEvent[linVect])
+                
+                
+            # Chaque rangée (val) de structTrain représente un train du fichier courant (à une fréquence donnée)
+            amplitudeEmgConcat = []
+            amplitudeEmgMoyParFreq = {}
+            for val in structTrain:
+                sample = da.cut_individual_event(0, 0.02, val, signal_channel, self.freq) # sample = psth unique de chaque pulse
+                amplitudeEmg =[]
+                for emgUnique in sample:
+                    amplitudeEmg.append(max(emgUnique)-min(emgUnique))
+                amplitudeEmgConcat.append(amplitudeEmg)
+                
+            nTrainXPulse = np.array(amplitudeEmgConcat).shape
+            meanAmpEmgConcat = np.array(amplitudeEmgConcat).mean(0) # moyenne des amplitudes des emgs par train
+            stdAmpEmgConcat = np.array(amplitudeEmgConcat).std(0) # standart deviation
+            
+            # Plot :
+            plt.plot(range(nTrainXPulse[1]), meanAmpEmgConcat,'o')
+            plt.title("Fréquence intra train : " + str(self.frequence[fichier]))
+            step = math.floor(nTrainXPulse[1]/4)
+            plt.xticks(range(1,nTrainXPulse[1],step))
+            plt.show()  
+                
+                
+
+
+            # sample = da.cut_individual_event(t_inf, t_supp, indexPulseEvent, signal_channel, self.freq)
+            
+            
+        #     min_psth, moy_psth, max_psth = da.PSTH(sample)
+        #     mini = min(moy_psth)
+        #     maxi = max(moy_psth)
+        #     min_max = [min([min_max[0], mini]), max([min_max[1], maxi])]
+        #     if (len(self.adi_out)>1):
+        #         psth_compil.append(moy_psth)
+        #     else:
+        #         psth_compil = [moy_psth]
+        # self.t_inf = t_inf
+        # self.t_supp = t_supp
+        # self.psth_compil = psth_compil
+        # self.min_max = min_max
     
     def latenceVsEmg(self, OnePulsePerEvent, showPlotLatence, showPlot):
         """calcul la latence en fonction de l'emg rectifié. Part du fichier importation mis sous la forme dictionnaire c_data

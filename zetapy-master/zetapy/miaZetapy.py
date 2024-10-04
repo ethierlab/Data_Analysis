@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 # load data for example cell
 path ="C:/Users/Maxime/Downloads/time_around_event_center_ch18_unit1.csv"
 # path ="C:/Users/Maxime/Documents/GitHub/Data_Analysis/zetapy-master/zetapy/testNeuronZeta.csv"
-#path = "C:/Users/Maxime/Desktop/simulaton_results3.csv"
+path = "C:/Users/Maxime/Desktop/simulaton_results3.csv"
 path = 'C:/Users/Maxime/Desktop/simulatonResultsInhibition.csv'
 path = 'C:/Users/Maxime/Desktop/simulatonResultsNeutre.csv'
 with open(path, 'r') as f:

@@ -558,16 +558,15 @@ def takeFirstPeak(peak_event:list, min_inter_train, max_intra_train, frequence):
     inter train space time.
     peak_event -> index"""
     
-    
-    ind1=min_inter_train*frequence
-    ind2=max_intra_train*frequence
-    
+    ind1=max_intra_train*frequence
+    ind2=min_inter_train*frequence
+
     listnouvelle=[peak_event[0]]
     for i in range(1, len(peak_event)-1):
         inter_post=(peak_event[i+1]-peak_event[i])
         inter_pre=(peak_event[i]-peak_event[i-1])
         
-        if (inter_post<=ind2+(0.05*ind2))and(inter_pre>=ind1-(0.05*ind1)):
+        if (inter_post <= ind1) and (inter_pre >= ind2):
            
            listnouvelle.append(peak_event[i])
    
