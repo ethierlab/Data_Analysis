@@ -330,7 +330,7 @@ class Psth:
         self.psth_compil = psth_compil
         self.min_max = min_max
 
-    def fromChannel2PsthIntraTrain(self, t_inf, t_supp, numberSignal, numberEvent, plot):
+    def fromChannel2PsthIntraTrainExp4(self, t_inf, t_supp, numberSignal, numberEvent, plot):
         """ Fonction qui analyse la fatigue intra train selon la fréquence des pulses intra train. 
         t_inf, t_supp : time in second before and after the event
             numberSignal : channel number, numberEvent : event channel number
@@ -341,6 +341,8 @@ class Psth:
         maxForPlot = 0
         maxForPlotRect = 0
         amplitudeEmgMoyParFreq = {} # dictionnaire des outputs analysés
+        psth_compil = []
+        self.min_max=[0,0]
 
         for fichier in range(len(self.adi_out)): # boucle fichier par fichier
             
@@ -363,7 +365,13 @@ class Psth:
             indexPulseEvent = da.find_event_index(event_channel, self.freq, self.select, self.time_window, self.experiment)
             indexTrainEvent = da.takeFirstPeak(indexPulseEvent, .25, .5, self.freq) # second argument = min inter train and 3e = max intra train
             
-
+            # Attribution de la variable psth_compil en vue de produire la figure allpsth
+            sample = da.cut_individual_event(t_inf, t_supp, indexTrainEvent, signal_channel, self.freq)
+            min_psth, moy_psth, max_psth = da.PSTH(sample)
+            psth_compil.append(moy_psth)
+            mini = min(moy_psth)
+            maxi = max(moy_psth)
+            self.min_max = [min([self.min_max[0], mini]), max([self.min_max[1], maxi])]
 
 
             # Calcul de l'amplitude du MEP sur une fenêtre restreinte de chaque stimulus. La position du pulse dans le train est considérée
@@ -437,6 +445,7 @@ class Psth:
                 plt.ylim((0, maxForPlot + 0.1*maxForPlot))
                 plt.xticks(fontsize=6)
                 plt.yticks(fontsize=6)
+            plt.suptitle("Amplitude et variances des EMG selon sa position au sein du train")
             plt.show()
 
             # EMG rectifié
@@ -462,6 +471,9 @@ class Psth:
                 plt.xticks(fontsize=6)
                 plt.yticks(fontsize=6)
             plt.show()
+        self.psth_compil = psth_compil
+        self.t_inf = t_inf
+        self.t_supp = t_supp
 
     def fromChannel2PsthIntraTrainExp5(self, numberSignal, numberEvent, frequenceTrain, plot):
         """ Fonction qui analyse la fatigue intra train selon une seule fréquence répétée n fois train. 
@@ -469,13 +481,15 @@ class Psth:
             OnePulsePerEvent : True = each event is not a train. False = each event is a train, first spike took as onset
            
         """
-
+        # Declaration variables
         maxForPlot = 0
         maxForPlotRect = 0
         amplitudeEmgMoyParFreq = {} # dictionnaire des outputs analysés
         self.frequence = frequenceTrain
+        min_max = [0,0]
+        psth_compil=[]
         
-        
+        #--------------- Attribution variable des canaux d'enr et des indices des événements stimulus
         signal_channel=self.c_data[(numberSignal - 1, 0)] # Value associate to the channel bloc
         event_channel=self.c_data[(numberEvent - 1, 0)] # Value associate to the channel bloc
         signal_channel = signal_channel / self.signal_channel_gain
@@ -484,36 +498,29 @@ class Psth:
         signalFilt = sosfilt(sos, signal_channel) # high pass filter 50hz
         rectSignalFilt = abs(signalFilt)
         sos = butter(2, 10, 'lp', fs=self.freq, output='sos')
-        signalFiltFinal = sosfilt(sos, rectSignalFilt) # high pass filter 50hz # signal rectifié
+        signalFiltFinal = sosfilt(sos, rectSignalFilt) # high pass filter 50hz # SIGNAL RECTIFIÉ
         time = np.arange(len(signal_channel))
         time  = time/self.freq
         indexPulseEvent = da.find_event_index(event_channel, self.freq, self.select, self.time_window, self.experiment)
         indexTrainEvent = da.takeFirstPeak(indexPulseEvent, .25, .5, self.freq) # second argument = min inter train and 3e = max intra train
-            
-        """
-        ICI RENDU À ADAPTER SCRIPT EN VUE DE PRODUIRE : SELF.PSTHCOMPIL COMME ENTRÉÉ POUR LA FCT SHOWALLPSTH
+        #----------------
 
-         index = da.find_event_index(event_channel, self.freq, self.select, self.time_window, self.experiment)
-            if not OnePulsePerEvent:
-                index = da.takeFirstPeak(index, .2, .5, self.freq) # second argument = min inter train and 3e = max intra train
-            sample = da.cut_individual_event(t_inf, t_supp, index, signal_channel, self.freq)
-            
-            min_psth, moy_psth, max_psth = da.PSTH(sample)
-            mini = min(moy_psth)
-            maxi = max(moy_psth)
+        #-----------Psth de chacun des trains--------------------------
+        sample = da.cut_individual_event(.1, 2, indexTrainEvent, signal_channel, self.freq)
+        
+        mini = 0
+        maxi = 0
+        min_max = [min([min_max[0], mini]), max([min_max[1], maxi])]
+        
+        for val in sample:
+            mini = min(val)
+            maxi = max(val)
             min_max = [min([min_max[0], mini]), max([min_max[1], maxi])]
-            if (len(self.adi_out)>1):
-                psth_compil.append(moy_psth)
-            else:
-                psth_compil = [moy_psth]
-        self.t_inf = t_inf
-        self.t_supp = t_supp
-        self.psth_compil = psth_compil
+            psth_compil.append(val)
+
+        self.psth_compil = psth_compil # psth n'est pas moyenné, il est de format n rangées par bin colonnes
         self.min_max = min_max
         
-        
-        """
-
 
         # Calcul de l'amplitude du MEP sur une fenêtre restreinte de chaque stimulus. La position du pulse dans le train est considérée
         # Structure des trains :
@@ -576,9 +583,10 @@ class Psth:
             plt.xlabel("nième pulse", fontsize=8)
             plt.ylabel("EMG amplitude (V)", fontsize=8)
             plt.legend(fontsize=8)
-            plt.ylim((0, maxForPlot + 0.1*maxForPlot))
+            plt.ylim((0, maxForPlot + 0.2*maxForPlot))
             plt.xticks(fontsize=6)
             plt.yticks(fontsize=6)
+            plt.title("Amplitudes et variances des EMGs selon la position au sein du train")
             plt.show()
 
             # EMG rectifié
@@ -596,6 +604,7 @@ class Psth:
             plt.ylim((0, maxForPlotRect + 0.1*maxForPlotRect))
             plt.xticks(fontsize=6)
             plt.yticks(fontsize=6)
+            plt.title("Amplitudes et variances des EMGs rectifiés selon la position au sein du train")
             plt.show()
 
 
@@ -704,6 +713,7 @@ class Psth:
         "Plot psth of each stimulation on the same page. Make a diff"
         subplot_mxn =  self.findMxNsubplotGrid(len(self.adi_out))
         fin = len(self.adi_out)
+        
         for i in range(fin):
             expression = "plt.subplot(" + str(subplot_mxn[0]) +","+ str(subplot_mxn[1])+"," + str(i+1) + ")"
             exec(expression)
@@ -739,7 +749,63 @@ class Psth:
         plt.show()
         
         self.psth_time = time
+    
+    def showAllPsthFatigueTrainExp5(self, saveplotName = ""):
+        "Plot each Psth of each train and the average Psth"
+        u = -1
+        subplot_mxn =  self.findMxNsubplotGrid(len(self.psth_compil))
+        for psth in self.psth_compil:
+            u += 1  
+            expression = "plt.subplot(" + str(subplot_mxn[0]) +","+ str(subplot_mxn[1])+"," + str(u+1) + ")"
+            exec(expression)
+            # puissance = self.calibCourantPuissance(self.courant_val, self.typeStim). Si on veut la calibration finale en Y
+            time = np.arange(len(psth))
+            time = (time/self.freq)-self.t_inf
+            plt.plot(time, psth, label= "Train #" + str(u +1))
+            plt.xlabel("time (s)", fontsize=8)
+            plt.ylabel("EMG (V)", fontsize=8)
+            plt.legend(fontsize=8)
+            plt.ylim((self.min_max[0] - self.min_max[0]*.1 ,self.min_max[1]+self.min_max[1]*.1))
+            plt.xticks(fontsize=8)
+            plt.yticks(fontsize=8)
+        plt.suptitle("Psth de chacun des trains à une fréquence de " + str(self.frequence) + " hz") # titre de la figure 
+        plt.show()
+        
+        meanPSTH = np.array(self.psth_compil).mean(0)
+        plt.plot(time, meanPSTH, label= "Fréquence :" + str(self.frequence))
+        plt.xlabel("time (s)", fontsize=8)
+        plt.ylabel("EMG (V)", fontsize=8)
+        plt.legend(fontsize=8)
+        plt.ylim((self.min_max[0] - self.min_max[0]*.1 ,self.min_max[1]+self.min_max[1]*.1))
+        plt.xticks(fontsize=8)
+        plt.yticks(fontsize=8)
+        plt.suptitle("PSTH moyen, stimulation " + self.typeStim) # titre de la figure 
+        plt.show()
+        
+        self.psth_time = time
 
+    def showAllPsthFatigueTrainExp4(self, saveplotName = ""):
+        "Plot each Psth of each train and the average Psth"
+        
+        subplot_mxn =  self.findMxNsubplotGrid(len(self.psth_compil))
+        for i in range(len(self.psth_compil)):
+            expression = "plt.subplot(" + str(subplot_mxn[0]) +","+ str(subplot_mxn[1])+"," + str(i+1) + ")"
+            exec(expression)
+            ind = np.argsort(self.frequence)
+            # puissance = self.calibCourantPuissance(self.courant_val, self.typeStim). Si on veut la calibration finale en Y
+            time = np.arange(len(self.psth_compil[0]))
+            time = (time/self.freq)-self.t_inf
+            plt.plot(time, self.psth_compil[ind[i]], label= "Fréquence des trains " + str(self.frequence[ind[i]]))
+            plt.xlabel("time (s)", fontsize=8)
+            plt.ylabel("EMG (V)", fontsize=8)
+            plt.legend(fontsize=8)
+            plt.ylim((self.min_max[0] - self.min_max[0]*.1 , self.min_max[1]+self.min_max[1]*.1))
+            plt.xticks(fontsize=8)
+            plt.yticks(fontsize=8)
+        plt.suptitle("Psth des stimulations " + self.typeStim + " selon la fréquence des trains ") # titre de la figure 
+        plt.show()
+        
+        
     def showAllPsthPulse(self, saveplotName = ""):
         "Plot psth of each stimulation on the same page. Make a diff"
         subplot_mxn =  self.findMxNsubplotGrid(len(self.adi_out))
