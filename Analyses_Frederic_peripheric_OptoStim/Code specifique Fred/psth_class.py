@@ -330,6 +330,87 @@ class Psth:
         self.psth_compil = psth_compil
         self.min_max = min_max
 
+    def fromChannel2PsthIntraTrainExp3(self, numberSignal, numberEvent, frequenceTrain, plot):
+        """ Fonction qui analyse la fatigue d'un pulse répété sur une longue durée à une fréquence constante. 
+            numberSignal : channel number, numberEvent : event channel number
+            
+           
+        """
+        # Declaration variables
+        maxForPlot = 0
+        maxForPlotRect = 0
+        amplitudeEmgMoyParFreq = {} # dictionnaire des outputs analysés
+        self.frequence = frequenceTrain
+        min_max = [0,0]
+        psth_compil=[]
+        
+        #--------------- Attribution variable des canaux d'enr et des indices des événements stimulus
+        signal_channel=self.c_data[(numberSignal - 1, 0)] # Value associate to the channel bloc
+        event_channel=self.c_data[(numberEvent - 1, 0)] # Canal événement associé à un bloc donné, ici un seul bloc dans labchart
+        signal_channel = signal_channel / self.signal_channel_gain
+        # rectified segment
+        sos = butter(2, 50, 'hp', fs=self.freq, output='sos')
+        signalFilt = sosfilt(sos, signal_channel) # high pass filter 50hz
+        rectSignalFilt = abs(signalFilt)
+        sos = butter(2, 10, 'lp', fs=self.freq, output='sos')
+        signalFiltFinal = sosfilt(sos, rectSignalFilt) # high pass filter 50hz # SIGNAL RECTIFIÉ
+        time = np.arange(len(signal_channel))
+        time  = time/self.freq
+        indexPulseEvent = da.find_event_index(event_channel, self.freq, self.select, self.time_window, self.experiment)
+        
+
+        # ---------------------Amplitude EMG selon le temps ou la nième stimulation----------------------------------
+            
+        sample = da.cut_individual_event(0, 0.02, indexPulseEvent, signal_channel, self.freq) # sample = psth unique de chaque pulse
+        sampleEMGRect =  da.cut_individual_event(0, 0.02, indexPulseEvent, signalFiltFinal, self.freq) # sample = segment rectifié de l'emg
+        amplitudeEmg =[]
+        amplitudeEmgRect=[]
+        for emgUnique in sample:
+            amplitudeEmg.append(max(emgUnique)-min(emgUnique))
+        for emgRect in sampleEMGRect:
+            amplitudeEmgRect.append(max(emgRect))
+        
+        # -------------------- Figure amplitude EMG selon temps
+        plt.plot(time[indexPulseEvent], medfilt(amplitudeEmg,51))
+        plt.title("Diminution de l'amplitude des EMGs suivant un stimuli répété à " + str(frequenceTrain) + " hz")
+        plt.xlabel("temps (s)")
+        plt.ylabel("Amplitdue EMG (V)")
+        plt.show()
+
+
+
+        #----Psth évolutif tout au long des stimulations répétées 
+        "Doit déterminer le nombre d'événements choisi par psth, l'intervalle entre les psths ou le nombre de psth "
+        dureePsth = 15 # duree du psth en seconde
+        binPsth = math.floor(dureePsth*self.freq)
+        intervallePsth = 30 # intervalle en seconde entre les psths
+        binIntervallePsth = math.floor(intervallePsth*self.freq)
+
+        #Structure des trains
+        tFin = 0
+        indexDebPsth = [indexPulseEvent[0]]
+        
+
+        while tFin < time[-1]:
+            indPlusGrand = indexDebPsth[-1] + binPsth + binIntervallePsth
+            prochainIndex = np.where(indexPulseEvent >= indPlusGrand)[0]
+            
+            if len(prochainIndex) > 0:
+                prochainIndex = indexPulseEvent[prochainIndex[0]]
+                indexDebPsth.append(prochainIndex) # Variable debut psth
+                tFin = (prochainIndex)/self.freq
+            else:
+                tFin = time[-1]+12
+        
+        sample = da.cut_individual_event(.1, dureePsth, indexDebPsth, signal_channel, self.freq)
+        for val in sample:
+            plt.plot(val)
+            plt.show()
+
+
+        
+
+
     def fromChannel2PsthIntraTrainExp4(self, t_inf, t_supp, numberSignal, numberEvent, plot):
         """ Fonction qui analyse la fatigue intra train selon la fréquence des pulses intra train. 
         t_inf, t_supp : time in second before and after the event
@@ -442,7 +523,7 @@ class Psth:
                 plt.xlabel("nième pulse", fontsize=8)
                 plt.ylabel("EMG amplitude (V)", fontsize=8)
                 plt.legend(fontsize=8)
-                plt.ylim((0, maxForPlot + 0.1*maxForPlot))
+                plt.ylim((0, maxForPlot + 0.2*maxForPlot))
                 plt.xticks(fontsize=6)
                 plt.yticks(fontsize=6)
             plt.suptitle("Amplitude et variances des EMG selon sa position au sein du train")
@@ -467,7 +548,7 @@ class Psth:
                 plt.xlabel("nième pulse", fontsize=8)
                 plt.ylabel("EMG rectifié (V)", fontsize=8)
                 plt.legend(fontsize=8)
-                plt.ylim((0, maxForPlotRect + 0.1*maxForPlotRect))
+                plt.ylim((0, maxForPlotRect + 0.2*maxForPlotRect))
                 plt.xticks(fontsize=6)
                 plt.yticks(fontsize=6)
             plt.show()
@@ -583,7 +664,7 @@ class Psth:
             plt.xlabel("nième pulse", fontsize=8)
             plt.ylabel("EMG amplitude (V)", fontsize=8)
             plt.legend(fontsize=8)
-            plt.ylim((0, maxForPlot + 0.2*maxForPlot))
+            plt.ylim((min(cerr), maxForPlot + max(cerr) + 0.2*max(cerr)))
             plt.xticks(fontsize=6)
             plt.yticks(fontsize=6)
             plt.title("Amplitudes et variances des EMGs selon la position au sein du train")
@@ -601,12 +682,11 @@ class Psth:
             plt.xlabel("nième pulse", fontsize=8)
             plt.ylabel("EMG rectifié (V)", fontsize=8)
             plt.legend(fontsize=8)
-            plt.ylim((0, maxForPlotRect + 0.1*maxForPlotRect))
+            plt.ylim((min(cerr), maxForPlotRect + max(cerr) + 0.2*max(cerr)))
             plt.xticks(fontsize=6)
             plt.yticks(fontsize=6)
             plt.title("Amplitudes et variances des EMGs rectifiés selon la position au sein du train")
             plt.show()
-
 
     def latenceVsEmg(self, OnePulsePerEvent, showPlotLatence, showPlot):
         """calcul la latence en fonction de l'emg rectifié. Part du fichier importation mis sous la forme dictionnaire c_data
@@ -804,8 +884,7 @@ class Psth:
             plt.yticks(fontsize=8)
         plt.suptitle("Psth des stimulations " + self.typeStim + " selon la fréquence des trains ") # titre de la figure 
         plt.show()
-        
-        
+                
     def showAllPsthPulse(self, saveplotName = ""):
         "Plot psth of each stimulation on the same page. Make a diff"
         subplot_mxn =  self.findMxNsubplotGrid(len(self.adi_out))
@@ -908,9 +987,7 @@ class Psth:
             popt, pcov = curve_fit(self.sigmoid, xdata, ydata, p0, method='lm')
             self.paraSigmoid = popt
         except RuntimeError :
-            self.paraSigmoid = [0, 0, 0, 0]
-
-        
+            self.paraSigmoid = [0, 0, 0, 0]     
         
     def findSigmoidYValue(self,pourcentageMax):
 
