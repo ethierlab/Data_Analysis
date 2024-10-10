@@ -330,7 +330,7 @@ class Psth:
         self.psth_compil = psth_compil
         self.min_max = min_max
 
-    def fromChannel2PsthIntraTrainExp3(self, numberSignal, numberEvent, frequenceTrain, plot):
+    def fromChannel2PsthIntraTrainExp3(self, numberSignal, numberEvent, frequenceTrain, dureePsth = 15, intervallePsth = 30, plot = False):
         """ Fonction qui analyse la fatigue d'un pulse répété sur une longue durée à une fréquence constante. 
             numberSignal : channel number, numberEvent : event channel number
             
@@ -371,19 +371,19 @@ class Psth:
             amplitudeEmgRect.append(max(emgRect))
         
         # -------------------- Figure amplitude EMG selon temps
-        plt.plot(time[indexPulseEvent], medfilt(amplitudeEmg,51))
-        plt.title("Diminution de l'amplitude des EMGs suivant un stimuli répété à " + str(frequenceTrain) + " hz")
-        plt.xlabel("temps (s)")
-        plt.ylabel("Amplitdue EMG (V)")
-        plt.show()
+        # plt.plot(time[indexPulseEvent], medfilt(amplitudeEmg,51))
+        # plt.title("Diminution de l'amplitude des EMGs suivant un stimuli répété à " + str(frequenceTrain) + " hz")
+        # plt.xlabel("temps (s)")
+        # plt.ylabel("Amplitdue EMG (V)")
+        # plt.show()
 
 
 
         #----Psth évolutif tout au long des stimulations répétées 
         "Doit déterminer le nombre d'événements choisi par psth, l'intervalle entre les psths ou le nombre de psth "
-        dureePsth = 15 # duree du psth en seconde
+        dureePsth = dureePsth # duree du psth en seconde
         binPsth = math.floor(dureePsth*self.freq)
-        intervallePsth = 30 # intervalle en seconde entre les psths
+        intervallePsth = intervallePsth # intervalle en seconde entre les psths
         binIntervallePsth = math.floor(intervallePsth*self.freq)
 
         #Structure des trains
@@ -402,14 +402,62 @@ class Psth:
             else:
                 tFin = time[-1]+12
         
-        sample = da.cut_individual_event(.1, dureePsth, indexDebPsth, signal_channel, self.freq)
-        for val in sample:
-            plt.plot(val)
-            plt.show()
+        # Calcul des moyennes et écart-types des amplitudes des EMGs pour la période des psths
+        #amplitudeEmg
+        #amplitudeEmgRect
+        moyPsthAmplitude=[]
+        stdPsthAmplitude=[]
+        indexDebCompil=[]
+        psthTraceX=[] # Psth time
+        psthTraceY=[] # y value minimum of the graph
+        npoint=20
 
-
+        for t_index in indexDebPsth:
+            binDebut = t_index
+            binFin = t_index + (dureePsth * self.freq)
+            indexDeb = np.where(indexPulseEvent >= binDebut)
+            indexFin = np.where(indexPulseEvent >= binFin)
+            
+            if indexPulseEvent[-1] >= binFin:
+                indexDeb1 = indexDeb[0][0] # au sampling des pulses de stims
+                
+                indexFin1 = indexFin[0][0] 
+                positionDeb = indexPulseEvent[indexDeb1]
+                positionFin = indexPulseEvent[indexFin1]
+                
+                emgPeak = amplitudeEmg[indexDeb1:indexFin1]
+                moyenne = np.array(emgPeak).mean()
+                std = np.array(emgPeak).std()
+                moyPsthAmplitude.append(moyenne)
+                stdPsthAmplitude.append(std)
+                indexDebCompil.append(positionDeb) # à l'échelle de la freq d'échantillonnage
+                psthTraceX.append(np.linspace(time[positionDeb],time[positionFin],npoint))
+                psthTraceY.append(np.ones(npoint)*moyenne)
+                   
         
-
+        
+        if plot:
+            plt.figure(1)
+            plt.plot(psthTraceX, psthTraceY, '|k')
+            plt.errorbar(time[indexDebCompil], moyPsthAmplitude, stdPsthAmplitude, fmt="|k")
+            
+            plt.figure(2)
+            plt.plot(time[indexPulseEvent], medfilt(amplitudeEmg,1),".k")
+            plt.title("Diminution de l'amplitude des EMGs suivant un stimuli répété à " + str(frequenceTrain) + " hz")
+            plt.xlabel("temps (s)")
+            plt.ylabel("Amplitdue EMG (V)")
+            plt.show()
+        
+        
+    def enveloppe(self, signal):
+        "Trouve l'enveloppe des emgs"
+        sos = butter(2, 50, 'hp', fs=self.freq, output='sos')
+        signalFilt = sosfilt(sos, signal) # high pass filter 50hz
+        rectSignalFilt = abs(signalFilt)
+        sos = butter(2, 10, 'lp', fs=self.freq, output='sos')
+        signEnveloppe = sosfilt(sos, rectSignalFilt) # high pass filter 50hz # SIGNAL RECTIFIÉ
+        
+        return signEnveloppe
 
     def fromChannel2PsthIntraTrainExp4(self, t_inf, t_supp, numberSignal, numberEvent, plot):
         """ Fonction qui analyse la fatigue intra train selon la fréquence des pulses intra train. 

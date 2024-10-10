@@ -48,5 +48,5 @@ if __name__ == "__main__":
     fatigue.loadLabchartFromDir() # fournir (préfixe, sufixe) entourant la valeure de stim introduite dans fichier !!! doit changer nom de fonction si
     fatigue.calibrationSenseur = calibration.calibrationSenseur # calibre la force 
 
-    fatigue.fromChannel2PsthIntraTrainExp3(1, 2, 5, True)
+    fatigue.fromChannel2PsthIntraTrainExp3(1, 2, 5, 15, 30, True)
     #fatigue.showAllPsthFatigueTrainExp3("")
