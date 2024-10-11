@@ -442,7 +442,7 @@ class Psth:
             plt.errorbar(time[indexDebCompil], moyPsthAmplitude, stdPsthAmplitude, fmt="|k")
             
             plt.figure(2)
-            plt.plot(time[indexPulseEvent], medfilt(amplitudeEmg,1),".k")
+            plt.plot(time[indexPulseEvent], medfilt(amplitudeEmg,51),".k")
             plt.title("Diminution de l'amplitude des EMGs suivant un stimuli répété à " + str(frequenceTrain) + " hz")
             plt.xlabel("temps (s)")
             plt.ylabel("Amplitdue EMG (V)")

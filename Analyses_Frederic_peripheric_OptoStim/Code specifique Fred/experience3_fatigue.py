@@ -41,7 +41,17 @@ if __name__ == "__main__":
         m = calibration.calibrationSenseur["slope"] # pente de la calibration force
         b = calibration.calibrationSenseur["intercept"] # ordonnée a l'origine de la calibration force
     
+    dir_path = "C:/Users/Maxime/Desktop/FredericD/279/opto_droit/exp3"
+    fatigue = P.Psth(dir_path, "opto") # fournir (dossier chemin ou "", type de stim : "elect" ou "opto" )
+    fatigue.loadLabchartFromDir() # fournir (préfixe, sufixe) entourant la valeure de stim introduite dans fichier !!! doit changer nom de fonction si
+    fatigue.calibrationSenseur = calibration.calibrationSenseur # calibre la force 
+    fatigue.fromChannel2PsthIntraTrainExp3(1, 2, 5, 15, 30, True)
 
+    dir_path = "C:/Users/Maxime/Desktop/FredericD/279/elec_droit/exp3"
+    fatigue = P.Psth(dir_path, "elec") # fournir (dossier chemin ou "", type de stim : "elect" ou "opto" )
+    fatigue.loadLabchartFromDir() # fournir (préfixe, sufixe) entourant la valeure de stim introduite dans fichier !!! doit changer nom de fonction si
+    fatigue.calibrationSenseur = calibration.calibrationSenseur # calibre la force 
+    fatigue.fromChannel2PsthIntraTrainExp3(1, 2, 5, 15, 30, True)
 
     dir_path = "C:/Users/Maxime/Desktop/FredericD/324/opto_droit/exp3"
     fatigue = P.Psth(dir_path, "opto") # fournir (dossier chemin ou "", type de stim : "elect" ou "opto" )
@@ -49,4 +59,4 @@ if __name__ == "__main__":
     fatigue.calibrationSenseur = calibration.calibrationSenseur # calibre la force 
 
     fatigue.fromChannel2PsthIntraTrainExp3(1, 2, 5, 15, 30, True)
-    #fatigue.showAllPsthFatigueTrainExp3("")
+    
