@@ -138,7 +138,7 @@ class Psth:
             self.adi_out = adi_out
             self.pulseWidth = pulse
         elif (postFileNameChara == "hz"):
-            # condition variable indépendante : intensité ms
+            # condition variable indépendante : intensité hz
             frequence = []
             adi_out = []
 
@@ -329,7 +329,413 @@ class Psth:
         self.t_supp = t_supp
         self.psth_compil = psth_compil
         self.min_max = min_max
-    
+
+    def fromChannel2PsthIntraTrainExp3(self, numberSignal, numberEvent, frequenceTrain, dureePsth = 15, intervallePsth = 30, plot = False):
+        """ Fonction qui analyse la fatigue d'un pulse répété sur une longue durée à une fréquence constante. 
+            numberSignal : channel number, numberEvent : event channel number
+            
+           
+        """
+        # Declaration variables
+        maxForPlot = 0
+        maxForPlotRect = 0
+        amplitudeEmgMoyParFreq = {} # dictionnaire des outputs analysés
+        self.frequence = frequenceTrain
+        min_max = [0,0]
+        psth_compil=[]
+        
+        #--------------- Attribution variable des canaux d'enr et des indices des événements stimulus
+        signal_channel=self.c_data[(numberSignal - 1, 0)] # Value associate to the channel bloc
+        event_channel=self.c_data[(numberEvent - 1, 0)] # Canal événement associé à un bloc donné, ici un seul bloc dans labchart
+        signal_channel = signal_channel / self.signal_channel_gain
+        # rectified segment
+        sos = butter(2, 50, 'hp', fs=self.freq, output='sos')
+        signalFilt = sosfilt(sos, signal_channel) # high pass filter 50hz
+        rectSignalFilt = abs(signalFilt)
+        sos = butter(2, 10, 'lp', fs=self.freq, output='sos')
+        signalFiltFinal = sosfilt(sos, rectSignalFilt) # high pass filter 50hz # SIGNAL RECTIFIÉ
+        time = np.arange(len(signal_channel))
+        time  = time/self.freq
+        indexPulseEvent = da.find_event_index(event_channel, self.freq, self.select, self.time_window, self.experiment)
+        
+
+        # ---------------------Amplitude EMG selon le temps ou la nième stimulation----------------------------------
+            
+        sample = da.cut_individual_event(0, 0.02, indexPulseEvent, signal_channel, self.freq) # sample = psth unique de chaque pulse
+        sampleEMGRect =  da.cut_individual_event(0, 0.02, indexPulseEvent, signalFiltFinal, self.freq) # sample = segment rectifié de l'emg
+        amplitudeEmg =[]
+        amplitudeEmgRect=[]
+        for emgUnique in sample:
+            amplitudeEmg.append(max(emgUnique)-min(emgUnique))
+        for emgRect in sampleEMGRect:
+            amplitudeEmgRect.append(max(emgRect))
+        
+        # -------------------- Figure amplitude EMG selon temps
+        # plt.plot(time[indexPulseEvent], medfilt(amplitudeEmg,51))
+        # plt.title("Diminution de l'amplitude des EMGs suivant un stimuli répété à " + str(frequenceTrain) + " hz")
+        # plt.xlabel("temps (s)")
+        # plt.ylabel("Amplitdue EMG (V)")
+        # plt.show()
+
+
+
+        #----Psth évolutif tout au long des stimulations répétées 
+        "Doit déterminer le nombre d'événements choisi par psth, l'intervalle entre les psths ou le nombre de psth "
+        dureePsth = dureePsth # duree du psth en seconde
+        binPsth = math.floor(dureePsth*self.freq)
+        intervallePsth = intervallePsth # intervalle en seconde entre les psths
+        binIntervallePsth = math.floor(intervallePsth*self.freq)
+
+        #Structure des trains
+        tFin = 0
+        indexDebPsth = [indexPulseEvent[0]]
+        
+
+        while tFin < time[-1]:
+            indPlusGrand = indexDebPsth[-1] + binPsth + binIntervallePsth
+            prochainIndex = np.where(indexPulseEvent >= indPlusGrand)[0]
+            
+            if len(prochainIndex) > 0:
+                prochainIndex = indexPulseEvent[prochainIndex[0]]
+                indexDebPsth.append(prochainIndex) # Variable debut psth
+                tFin = (prochainIndex)/self.freq
+            else:
+                tFin = time[-1]+12
+        
+        # Calcul des moyennes et écart-types des amplitudes des EMGs pour la période des psths
+        #amplitudeEmg
+        #amplitudeEmgRect
+        moyPsthAmplitude=[]
+        stdPsthAmplitude=[]
+        indexDebCompil=[]
+        psthTraceX=[] # Psth time
+        psthTraceY=[] # y value minimum of the graph
+        npoint=20
+
+        for t_index in indexDebPsth:
+            binDebut = t_index
+            binFin = t_index + (dureePsth * self.freq)
+            indexDeb = np.where(indexPulseEvent >= binDebut)
+            indexFin = np.where(indexPulseEvent >= binFin)
+            
+            if indexPulseEvent[-1] >= binFin:
+                indexDeb1 = indexDeb[0][0] # au sampling des pulses de stims
+                
+                indexFin1 = indexFin[0][0] 
+                positionDeb = indexPulseEvent[indexDeb1]
+                positionFin = indexPulseEvent[indexFin1]
+                
+                emgPeak = amplitudeEmg[indexDeb1:indexFin1]
+                moyenne = np.array(emgPeak).mean()
+                std = np.array(emgPeak).std()
+                moyPsthAmplitude.append(moyenne)
+                stdPsthAmplitude.append(std)
+                indexDebCompil.append(positionDeb) # à l'échelle de la freq d'échantillonnage
+                psthTraceX.append(np.linspace(time[positionDeb],time[positionFin],npoint))
+                psthTraceY.append(np.ones(npoint)*moyenne)
+                   
+        
+        
+        if plot:
+            plt.figure(1)
+            plt.plot(psthTraceX, psthTraceY, '|k')
+            plt.errorbar(time[indexDebCompil], moyPsthAmplitude, stdPsthAmplitude, fmt="|k")
+            
+            plt.figure(2)
+            plt.plot(time[indexPulseEvent], medfilt(amplitudeEmg,51),".k")
+            plt.title("Diminution de l'amplitude des EMGs suivant un stimuli répété à " + str(frequenceTrain) + " hz")
+            plt.xlabel("temps (s)")
+            plt.ylabel("Amplitdue EMG (V)")
+            plt.show()
+        
+        
+    def enveloppe(self, signal):
+        "Trouve l'enveloppe des emgs"
+        sos = butter(2, 50, 'hp', fs=self.freq, output='sos')
+        signalFilt = sosfilt(sos, signal) # high pass filter 50hz
+        rectSignalFilt = abs(signalFilt)
+        sos = butter(2, 10, 'lp', fs=self.freq, output='sos')
+        signEnveloppe = sosfilt(sos, rectSignalFilt) # high pass filter 50hz # SIGNAL RECTIFIÉ
+        
+        return signEnveloppe
+
+    def fromChannel2PsthIntraTrainExp4(self, t_inf, t_supp, numberSignal, numberEvent, plot):
+        """ Fonction qui analyse la fatigue intra train selon la fréquence des pulses intra train. 
+        t_inf, t_supp : time in second before and after the event
+            numberSignal : channel number, numberEvent : event channel number
+            OnePulsePerEvent : True = each event is not a train. False = each event is a train, first spike took as onset
+           
+        """
+
+        maxForPlot = 0
+        maxForPlotRect = 0
+        amplitudeEmgMoyParFreq = {} # dictionnaire des outputs analysés
+        psth_compil = []
+        self.min_max=[0,0]
+
+        for fichier in range(len(self.adi_out)): # boucle fichier par fichier
+            
+            record = self.adi_out[fichier]
+            for channel in range(record.n_channels):
+                for bloc in range(record.n_records):
+                    self.c_data[(channel,bloc)] =  record.channels[channel].get_data(bloc+1)
+                    
+            signal_channel=self.c_data[(numberSignal - 1, 0)] # Value associate to the channel bloc
+            event_channel=self.c_data[(numberEvent - 1, 0)] # Value associate to the channel bloc
+            signal_channel = signal_channel / self.signal_channel_gain
+            # rectified segment
+            sos = butter(2, 50, 'hp', fs=self.freq, output='sos')
+            signalFilt = sosfilt(sos, signal_channel) # high pass filter 50hz
+            rectSignalFilt = abs(signalFilt)
+            sos = butter(2, 10, 'lp', fs=self.freq, output='sos')
+            signalFiltFinal = sosfilt(sos, rectSignalFilt) # high pass filter 50hz # signal rectifié
+            time = np.arange(len(signal_channel))
+            time  = time/self.freq
+            indexPulseEvent = da.find_event_index(event_channel, self.freq, self.select, self.time_window, self.experiment)
+            indexTrainEvent = da.takeFirstPeak(indexPulseEvent, .25, .5, self.freq) # second argument = min inter train and 3e = max intra train
+            
+            # Attribution de la variable psth_compil en vue de produire la figure allpsth
+            sample = da.cut_individual_event(t_inf, t_supp, indexTrainEvent, signal_channel, self.freq)
+            min_psth, moy_psth, max_psth = da.PSTH(sample)
+            psth_compil.append(moy_psth)
+            mini = min(moy_psth)
+            maxi = max(moy_psth)
+            self.min_max = [min([self.min_max[0], mini]), max([self.min_max[1], maxi])]
+
+
+            # Calcul de l'amplitude du MEP sur une fenêtre restreinte de chaque stimulus. La position du pulse dans le train est considérée
+            # Structure des trains :
+            structTrain = []
+            indexArray = np.array(indexPulseEvent)
+            indexTrainEvent.append(indexPulseEvent[-1]+10000)
+            
+            for i in range(len(indexTrainEvent)-1):
+                deb = indexTrainEvent[i]
+                fin = indexTrainEvent[i+1]
+                linVect = np.where(np.logical_and(indexArray >= deb, indexArray < fin))
+                structTrain.append(indexPulseEvent[linVect])
+                
+                
+            # Chaque rangée (val) de structTrain représente un train du fichier courant (à une fréquence donnée)
+            amplitudeEmgConcat = []
+            amplitudeEmgRectConcat = []
+            
+            
+            for val in structTrain:
+                sample = da.cut_individual_event(0, 0.02, val, signal_channel, self.freq) # sample = psth unique de chaque pulse
+                sampleEMGRect =  da.cut_individual_event(0, 0.02, val, signalFiltFinal, self.freq) # sample = segment rectifié de l'emg
+                amplitudeEmg =[]
+                amplitudeEmgRect=[]
+                for emgUnique in sample:
+                    amplitudeEmg.append(max(emgUnique)-min(emgUnique))
+                for emgRect in sampleEMGRect:
+                    amplitudeEmgRect.append(max(emgRect))
+
+                amplitudeEmgConcat.append(amplitudeEmg)
+                amplitudeEmgRectConcat.append(amplitudeEmgRect)
+
+            # EMG
+            nTrainXPulse = np.array(amplitudeEmgConcat).shape
+            meanAmpEmgConcat = np.array(amplitudeEmgConcat).mean(0) # moyenne des amplitudes des emgs par train
+            stdAmpEmgConcat = np.array(amplitudeEmgConcat).std(0) # standart deviation
+            maxForPlot = max([max(meanAmpEmgConcat) , maxForPlot]) # maximum des emgs pour uniformiser graphique 
+            amplitudeEmgMoyParFreq.update({(self.frequence[fichier], 'moyenne'): meanAmpEmgConcat})
+            amplitudeEmgMoyParFreq.update({(self.frequence[fichier], 'std'): stdAmpEmgConcat })
+            amplitudeEmgMoyParFreq.update({(self.frequence[fichier], 'shape'): nTrainXPulse }) # tuple (train,n pulses)
+
+            # EMG Rectifié
+            meanAmpEmgRectConcat = np.array(amplitudeEmgRectConcat).mean(0) # moyenne des amplitudes des emgs rect par train
+            stdAmpEmgRectConcat = np.array(amplitudeEmgRectConcat).std(0) # standart deviation rect
+            maxForPlotRect = max([max(meanAmpEmgRectConcat) , maxForPlotRect]) # maximum des emgs rect pour uniformiser graphique 
+            amplitudeEmgMoyParFreq.update({(self.frequence[fichier], 'moyenneRect'): meanAmpEmgRectConcat})
+            amplitudeEmgMoyParFreq.update({(self.frequence[fichier], 'stdRect'): stdAmpEmgRectConcat })
+
+            
+
+        if plot :
+            subplot_mxn =  self.findMxNsubplotGrid(fichier)
+            fin = fichier
+            # ordre des graphique en freq ascendante
+            ind = np.argsort(self.frequence)
+            for i in range(fin):
+                expression = "plt.subplot(" + str(subplot_mxn[0]) +","+ str(subplot_mxn[1])+"," + str(i+1) + ")"
+                exec(expression)
+                x_pulse = amplitudeEmgMoyParFreq[(self.frequence[ind[i]],'shape')][1] # nombre de pulse par train
+                x_pulse = range(1, x_pulse + 1)
+                x_train = amplitudeEmgMoyParFreq[(self.frequence[ind[i]],'shape')][0] # nombre de train par fichier
+                amplitudeEmgMoyen = amplitudeEmgMoyParFreq[(self.frequence[ind[i]], 'moyenne')]
+                cerr = amplitudeEmgMoyParFreq[(self.frequence[ind[i]], 'std')]
+                
+                plt.plot(x_pulse, amplitudeEmgMoyen, ".k" ,label= "Fréquence : " + str(self.frequence[ind[i]]) + " hz" + "n train = " + str(x_train))
+                plt.errorbar(x_pulse, amplitudeEmgMoyen, cerr, fmt = ".k")
+                plt.xlabel("nième pulse", fontsize=8)
+                plt.ylabel("EMG amplitude (V)", fontsize=8)
+                plt.legend(fontsize=8)
+                plt.ylim((0, maxForPlot + 0.2*maxForPlot))
+                plt.xticks(fontsize=6)
+                plt.yticks(fontsize=6)
+            plt.suptitle("Amplitude et variances des EMG selon sa position au sein du train")
+            plt.show()
+
+            # EMG rectifié
+            subplot_mxn =  self.findMxNsubplotGrid(fichier)
+            fin = fichier
+            # ordre des graphique en freq ascendante
+            ind = np.argsort(self.frequence)
+            for i in range(fin):
+                expression = "plt.subplot(" + str(subplot_mxn[0]) +","+ str(subplot_mxn[1])+"," + str(i+1) + ")"
+                exec(expression)
+                x_pulse = amplitudeEmgMoyParFreq[(self.frequence[ind[i]],'shape')][1] # nombre de pulse par train
+                x_pulse = range(1, x_pulse + 1)
+                x_train = amplitudeEmgMoyParFreq[(self.frequence[ind[i]],'shape')][0] # nombre de train par fichier
+                amplitudeEmgMoyen = amplitudeEmgMoyParFreq[(self.frequence[ind[i]], 'moyenneRect')]
+                cerr = amplitudeEmgMoyParFreq[(self.frequence[ind[i]], 'stdRect')]
+
+                plt.plot(x_pulse, amplitudeEmgMoyen, ".k" ,label= "Fréquence : " + str(self.frequence[ind[i]]) + " hz" + "n train = " + str(x_train))
+                plt.errorbar(x_pulse, amplitudeEmgMoyen, cerr, fmt = ".k")
+                plt.xlabel("nième pulse", fontsize=8)
+                plt.ylabel("EMG rectifié (V)", fontsize=8)
+                plt.legend(fontsize=8)
+                plt.ylim((0, maxForPlotRect + 0.2*maxForPlotRect))
+                plt.xticks(fontsize=6)
+                plt.yticks(fontsize=6)
+            plt.show()
+        self.psth_compil = psth_compil
+        self.t_inf = t_inf
+        self.t_supp = t_supp
+
+    def fromChannel2PsthIntraTrainExp5(self, numberSignal, numberEvent, frequenceTrain, plot):
+        """ Fonction qui analyse la fatigue intra train selon une seule fréquence répétée n fois train. 
+            numberSignal : channel number, numberEvent : event channel number
+            OnePulsePerEvent : True = each event is not a train. False = each event is a train, first spike took as onset
+           
+        """
+        # Declaration variables
+        maxForPlot = 0
+        maxForPlotRect = 0
+        amplitudeEmgMoyParFreq = {} # dictionnaire des outputs analysés
+        self.frequence = frequenceTrain
+        min_max = [0,0]
+        psth_compil=[]
+        
+        #--------------- Attribution variable des canaux d'enr et des indices des événements stimulus
+        signal_channel=self.c_data[(numberSignal - 1, 0)] # Value associate to the channel bloc
+        event_channel=self.c_data[(numberEvent - 1, 0)] # Value associate to the channel bloc
+        signal_channel = signal_channel / self.signal_channel_gain
+        # rectified segment
+        sos = butter(2, 50, 'hp', fs=self.freq, output='sos')
+        signalFilt = sosfilt(sos, signal_channel) # high pass filter 50hz
+        rectSignalFilt = abs(signalFilt)
+        sos = butter(2, 10, 'lp', fs=self.freq, output='sos')
+        signalFiltFinal = sosfilt(sos, rectSignalFilt) # high pass filter 50hz # SIGNAL RECTIFIÉ
+        time = np.arange(len(signal_channel))
+        time  = time/self.freq
+        indexPulseEvent = da.find_event_index(event_channel, self.freq, self.select, self.time_window, self.experiment)
+        indexTrainEvent = da.takeFirstPeak(indexPulseEvent, .25, .5, self.freq) # second argument = min inter train and 3e = max intra train
+        #----------------
+
+        #-----------Psth de chacun des trains--------------------------
+        sample = da.cut_individual_event(.1, 2, indexTrainEvent, signal_channel, self.freq)
+        
+        mini = 0
+        maxi = 0
+        min_max = [min([min_max[0], mini]), max([min_max[1], maxi])]
+        
+        for val in sample:
+            mini = min(val)
+            maxi = max(val)
+            min_max = [min([min_max[0], mini]), max([min_max[1], maxi])]
+            psth_compil.append(val)
+
+        self.psth_compil = psth_compil # psth n'est pas moyenné, il est de format n rangées par bin colonnes
+        self.min_max = min_max
+        
+
+        # Calcul de l'amplitude du MEP sur une fenêtre restreinte de chaque stimulus. La position du pulse dans le train est considérée
+        # Structure des trains :
+        structTrain = []
+        indexArray = np.array(indexPulseEvent)
+        indexTrainEvent.append(indexPulseEvent[-1]+10000)
+            
+        for i in range(len(indexTrainEvent)-1):
+            deb = indexTrainEvent[i]
+            fin = indexTrainEvent[i+1]
+            linVect = np.where(np.logical_and(indexArray >= deb, indexArray < fin))
+            structTrain.append(indexPulseEvent[linVect])
+                
+                
+        # Chaque rangée (val) de structTrain représente un train du fichier courant (à une fréquence donnée)
+        amplitudeEmgConcat = []
+        amplitudeEmgRectConcat = []
+            
+            
+        for val in structTrain:
+            sample = da.cut_individual_event(0, 0.02, val, signal_channel, self.freq) # sample = psth unique de chaque pulse
+            sampleEMGRect =  da.cut_individual_event(0, 0.02, val, signalFiltFinal, self.freq) # sample = segment rectifié de l'emg
+            amplitudeEmg =[]
+            amplitudeEmgRect=[]
+            for emgUnique in sample:
+                amplitudeEmg.append(max(emgUnique)-min(emgUnique))
+            for emgRect in sampleEMGRect:
+                amplitudeEmgRect.append(max(emgRect))
+
+            amplitudeEmgConcat.append(amplitudeEmg)
+            amplitudeEmgRectConcat.append(amplitudeEmgRect)
+
+        # EMG
+        nTrainXPulse = np.array(amplitudeEmgConcat).shape
+        meanAmpEmgConcat = np.array(amplitudeEmgConcat).mean(0) # moyenne des amplitudes des emgs par train
+        stdAmpEmgConcat = np.array(amplitudeEmgConcat).std(0) # standart deviation
+        maxForPlot = max([max(meanAmpEmgConcat) , maxForPlot]) # maximum des emgs pour uniformiser graphique 
+        amplitudeEmgMoyParFreq.update({(self.frequence, 'moyenne'): meanAmpEmgConcat})
+        amplitudeEmgMoyParFreq.update({(self.frequence, 'std'): stdAmpEmgConcat })
+        amplitudeEmgMoyParFreq.update({(self.frequence, 'shape'): nTrainXPulse }) # tuple (train,n pulses)
+
+        # EMG Rectifié
+        meanAmpEmgRectConcat = np.array(amplitudeEmgRectConcat).mean(0) # moyenne des amplitudes des emgs rect par train
+        stdAmpEmgRectConcat = np.array(amplitudeEmgRectConcat).std(0) # standart deviation rect
+        maxForPlotRect = max([max(meanAmpEmgRectConcat) , maxForPlotRect]) # maximum des emgs rect pour uniformiser graphique 
+        amplitudeEmgMoyParFreq.update({(self.frequence, 'moyenneRect'): meanAmpEmgRectConcat})
+        amplitudeEmgMoyParFreq.update({(self.frequence, 'stdRect'): stdAmpEmgRectConcat })
+
+            
+
+        if plot :
+            x_pulse = amplitudeEmgMoyParFreq[(self.frequence,'shape')][1] # nombre de pulse par train
+            x_pulse = range(1, x_pulse + 1)
+            x_train = amplitudeEmgMoyParFreq[(self.frequence,'shape')][0] # nombre de train par fichier
+            amplitudeEmgMoyen = amplitudeEmgMoyParFreq[(self.frequence, 'moyenne')]
+            cerr = amplitudeEmgMoyParFreq[(self.frequence, 'std')]
+
+            plt.plot(x_pulse, amplitudeEmgMoyen, ".k" ,label= "Fréquence : " + str(self.frequence) + " hz" + "n train = " + str(x_train))
+            plt.errorbar(x_pulse, amplitudeEmgMoyen, cerr, fmt = ".k")
+            plt.xlabel("nième pulse", fontsize=8)
+            plt.ylabel("EMG amplitude (V)", fontsize=8)
+            plt.legend(fontsize=8)
+            plt.ylim((min(cerr), maxForPlot + max(cerr) + 0.2*max(cerr)))
+            plt.xticks(fontsize=6)
+            plt.yticks(fontsize=6)
+            plt.title("Amplitudes et variances des EMGs selon la position au sein du train")
+            plt.show()
+
+            # EMG rectifié
+            x_pulse = amplitudeEmgMoyParFreq[(self.frequence,'shape')][1] # nombre de pulse par train
+            x_pulse = range(1, x_pulse + 1)
+            x_train = amplitudeEmgMoyParFreq[(self.frequence,'shape')][0] # nombre de train par fichier
+            amplitudeEmgMoyen = amplitudeEmgMoyParFreq[(self.frequence, 'moyenneRect')]
+            cerr = amplitudeEmgMoyParFreq[(self.frequence, 'stdRect')]
+
+            plt.plot(x_pulse, amplitudeEmgMoyen, ".k" ,label= "Fréquence : " + str(self.frequence) + " hz" + "n train = " + str(x_train))
+            plt.errorbar(x_pulse, amplitudeEmgMoyen, cerr, fmt = ".k")
+            plt.xlabel("nième pulse", fontsize=8)
+            plt.ylabel("EMG rectifié (V)", fontsize=8)
+            plt.legend(fontsize=8)
+            plt.ylim((min(cerr), maxForPlotRect + max(cerr) + 0.2*max(cerr)))
+            plt.xticks(fontsize=6)
+            plt.yticks(fontsize=6)
+            plt.title("Amplitudes et variances des EMGs rectifiés selon la position au sein du train")
+            plt.show()
+
     def latenceVsEmg(self, OnePulsePerEvent, showPlotLatence, showPlot):
         """calcul la latence en fonction de l'emg rectifié. Part du fichier importation mis sous la forme dictionnaire c_data
         """
@@ -435,6 +841,7 @@ class Psth:
         "Plot psth of each stimulation on the same page. Make a diff"
         subplot_mxn =  self.findMxNsubplotGrid(len(self.adi_out))
         fin = len(self.adi_out)
+        
         for i in range(fin):
             expression = "plt.subplot(" + str(subplot_mxn[0]) +","+ str(subplot_mxn[1])+"," + str(i+1) + ")"
             exec(expression)
@@ -470,7 +877,62 @@ class Psth:
         plt.show()
         
         self.psth_time = time
+    
+    def showAllPsthFatigueTrainExp5(self, saveplotName = ""):
+        "Plot each Psth of each train and the average Psth"
+        u = -1
+        subplot_mxn =  self.findMxNsubplotGrid(len(self.psth_compil))
+        for psth in self.psth_compil:
+            u += 1  
+            expression = "plt.subplot(" + str(subplot_mxn[0]) +","+ str(subplot_mxn[1])+"," + str(u+1) + ")"
+            exec(expression)
+            # puissance = self.calibCourantPuissance(self.courant_val, self.typeStim). Si on veut la calibration finale en Y
+            time = np.arange(len(psth))
+            time = (time/self.freq)-self.t_inf
+            plt.plot(time, psth, label= "Train #" + str(u +1))
+            plt.xlabel("time (s)", fontsize=8)
+            plt.ylabel("EMG (V)", fontsize=8)
+            plt.legend(fontsize=8)
+            plt.ylim((self.min_max[0] - self.min_max[0]*.1 ,self.min_max[1]+self.min_max[1]*.1))
+            plt.xticks(fontsize=8)
+            plt.yticks(fontsize=8)
+        plt.suptitle("Psth de chacun des trains à une fréquence de " + str(self.frequence) + " hz") # titre de la figure 
+        plt.show()
+        
+        meanPSTH = np.array(self.psth_compil).mean(0)
+        plt.plot(time, meanPSTH, label= "Fréquence :" + str(self.frequence))
+        plt.xlabel("time (s)", fontsize=8)
+        plt.ylabel("EMG (V)", fontsize=8)
+        plt.legend(fontsize=8)
+        plt.ylim((self.min_max[0] - self.min_max[0]*.1 ,self.min_max[1]+self.min_max[1]*.1))
+        plt.xticks(fontsize=8)
+        plt.yticks(fontsize=8)
+        plt.suptitle("PSTH moyen, stimulation " + self.typeStim) # titre de la figure 
+        plt.show()
+        
+        self.psth_time = time
 
+    def showAllPsthFatigueTrainExp4(self, saveplotName = ""):
+        "Plot each Psth of each train and the average Psth"
+        
+        subplot_mxn =  self.findMxNsubplotGrid(len(self.psth_compil))
+        for i in range(len(self.psth_compil)):
+            expression = "plt.subplot(" + str(subplot_mxn[0]) +","+ str(subplot_mxn[1])+"," + str(i+1) + ")"
+            exec(expression)
+            ind = np.argsort(self.frequence)
+            # puissance = self.calibCourantPuissance(self.courant_val, self.typeStim). Si on veut la calibration finale en Y
+            time = np.arange(len(self.psth_compil[0]))
+            time = (time/self.freq)-self.t_inf
+            plt.plot(time, self.psth_compil[ind[i]], label= "Fréquence des trains " + str(self.frequence[ind[i]]))
+            plt.xlabel("time (s)", fontsize=8)
+            plt.ylabel("EMG (V)", fontsize=8)
+            plt.legend(fontsize=8)
+            plt.ylim((self.min_max[0] - self.min_max[0]*.1 , self.min_max[1]+self.min_max[1]*.1))
+            plt.xticks(fontsize=8)
+            plt.yticks(fontsize=8)
+        plt.suptitle("Psth des stimulations " + self.typeStim + " selon la fréquence des trains ") # titre de la figure 
+        plt.show()
+                
     def showAllPsthPulse(self, saveplotName = ""):
         "Plot psth of each stimulation on the same page. Make a diff"
         subplot_mxn =  self.findMxNsubplotGrid(len(self.adi_out))
@@ -573,9 +1035,7 @@ class Psth:
             popt, pcov = curve_fit(self.sigmoid, xdata, ydata, p0, method='lm')
             self.paraSigmoid = popt
         except RuntimeError :
-            self.paraSigmoid = [0, 0, 0, 0]
-
-        
+            self.paraSigmoid = [0, 0, 0, 0]     
         
     def findSigmoidYValue(self,pourcentageMax):
 
