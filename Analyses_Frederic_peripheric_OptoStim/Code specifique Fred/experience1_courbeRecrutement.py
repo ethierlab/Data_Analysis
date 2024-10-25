@@ -124,7 +124,7 @@ if __name__ == "__main__":
     
 
 
-    dir_path = "T:/Projects/optogenetic_periph/324/opto_droit/exp1"
+    dir_path = "T:/Projects/optogenetic_periph/330/opto_droit/exp1"
     psth1 = P.Psth(dir_path, "opto") # fournir (dossier chemin ou "", type de stim : "elect" ou "opto" )
     psth1.loadDataFromDir("_","ma") # fournir (préfixe, sufixe) entourant la valeure de stim introduite dans fichier !!! doit changer nom de fonction si
     # 1 seul fichier dans dossier (exp 2 et 3 non programmé)
