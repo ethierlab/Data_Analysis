@@ -17,7 +17,7 @@ from tkinter import filedialog
 
 if __name__ == "__main__":
   
-    # 1 fichier à la fois :
+   # exp 5 fatigue intratrain 20 hz, intensité stimulation faible
 
     # Choix du bon capteur force 100g ou 500g :
 

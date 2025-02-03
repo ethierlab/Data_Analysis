@@ -17,6 +17,7 @@ import math
 import tkinter as tk
 from tkinter import filedialog
 import statistics as st
+import pandas as pd
 
 class Psth:
     "For psth production and visualisation"
@@ -76,7 +77,7 @@ class Psth:
         courant_val = []
         adi_out = []
 
-        if (postFileNameChara == "ma"):
+        if (postFileNameChara == "ma") or (postFileNameChara == "ua"):
             if n_files == 0:
                 print("Error no files to analyse")
             elif n_files == 1:
@@ -213,9 +214,13 @@ class Psth:
 
         min_max=[0,0]
         psth_compil = []
-        
+        psth_compil_min = []
+        psth_compil_max = []
+        dataTramePsthSample =  pd.DataFrame()
+        etendu=[]
         for i in range(len(self.adi_out)):
             record = self.adi_out[i]
+            replication = 0
             for channel in range(record.n_channels):
                 for bloc in range(record.n_records):
                     self.c_data[(channel,bloc)] =  record.channels[channel].get_data(bloc+1)
@@ -229,19 +234,43 @@ class Psth:
             if not OnePulsePerEvent:
                 index = da.takeFirstPeak(index, .2, .5, self.freq) # second argument = min inter train and 3e = max intra train
             sample = da.cut_individual_event(t_inf, t_supp, index, signal_channel, self.freq)
+            # Nouveau tableau dataframe
+            # construction du dataframe panda :
+            for s in sample:
+                n = len(s)
+                t = np.arange(n)
+                t  = (t/self.freq) - t_inf
+                min_signal = min(s)
+                max_signal = max(s)
+                etendu.append([self.courant_val[i], replication+1, max_signal - min_signal])
+                listeCourant = np.ones(n)*self.courant_val[i]
+                repetition= np.ones(n)*replication+1
+                replication += 1
+                listParametre = list(zip(listeCourant, t, s, repetition))
+                dataTramePsthSample = pd.concat([dataTramePsthSample, pd.DataFrame(listParametre, columns = ["Courant", "Temps", "Segment Psth", "Repetition"])])
+                
             
+             
             min_psth, moy_psth, max_psth = da.PSTH(sample)
             mini = min(moy_psth)
             maxi = max(moy_psth)
             min_max = [min([min_max[0], mini]), max([min_max[1], maxi])]
             if (len(self.adi_out)>1):
+                psth_compil_min.append(min_psth)
                 psth_compil.append(moy_psth)
+                psth_compil_max.append(max_psth)
             else:
+                psth_compil_min = [min_psth]
                 psth_compil = [moy_psth]
+                psth_compil_max = [max_psth]
+        self.dataFrameSegmentPsth = dataTramePsthSample
         self.t_inf = t_inf
         self.t_supp = t_supp
         self.psth_compil = psth_compil
+        self.psth_compil_min = psth_compil_min
+        self.psth_compil_max = psth_compil_max
         self.min_max = min_max
+        self.etenduTouSegment = etendu
     
     def fromChannel2PsthRectEmg(self, t_inf, t_supp, numberSignal, numberEvent, OnePulsePerEvent = True):
         """t_inf, t_supp : time in second before and after the event
@@ -438,17 +467,18 @@ class Psth:
         
         if plot:
             plt.figure(1)
-            plt.plot(psthTraceX, psthTraceY, '|k')
-            plt.errorbar(time[indexDebCompil], moyPsthAmplitude, stdPsthAmplitude, fmt="|k")
+            plt.plot(psthTraceX, psthTraceY, '|', color ='gray')
+            plt.ylim([0, 2])
+            plt.errorbar(time[indexDebCompil], moyPsthAmplitude, stdPsthAmplitude, fmt="|", color ="gray")
             
             plt.figure(2)
-            plt.plot(time[indexPulseEvent], medfilt(amplitudeEmg,51),".k")
+            plt.plot(time[indexPulseEvent], medfilt(amplitudeEmg,51),".",color = "gray")
+            plt.ylim([0, 2])
             plt.title("Diminution de l'amplitude des EMGs suivant un stimuli répété à " + str(frequenceTrain) + " hz")
             plt.xlabel("temps (s)")
             plt.ylabel("Amplitdue EMG (V)")
             plt.show()
-        
-        
+                
     def enveloppe(self, signal):
         "Trouve l'enveloppe des emgs"
         sos = butter(2, 50, 'hp', fs=self.freq, output='sos')
@@ -735,11 +765,76 @@ class Psth:
             plt.yticks(fontsize=6)
             plt.title("Amplitudes et variances des EMGs rectifiés selon la position au sein du train")
             plt.show()
+ 
+    def latence(self, OnePulsePerEvent, window, step, tolerance, verif_plot):
+        """calcul la latence
+        """
+        indice=[]
+        val_stimulation = [] # repetition de la valeur du courant de stimulation
+        niemeRep = []
+        emg_amplitude = []   
+        for fichier in range(len(self.adi_out)): # Loop fichier par fichier : 1 fichier = 1 intensité dans ce cas ci
+            val_courant = self.courant_val[fichier] # établi dans la fonction "loadDataFromDir"
+            signal_channel=self.c_data[(0, 0)] # Value associate to the channel bloc
+            event_channel=self.c_data[(1, 0)] # Value associate to the channel bloc
+            signal_channel = signal_channel / self.signal_channel_gain
+            index = da.find_event_index(event_channel, self.freq, self.select, self.time_window, self.experiment)
+            if not OnePulsePerEvent:
+                index = da.takeFirstPeak(index, .2, .5, self.freq)
+            
+            emg_max_latency = 0.050
+            thresholdMinEmg = 0.01
+            dx_time = 1/self.freq
+            
+            #latency
+            window_end_bin = math.floor(self.freq * emg_max_latency)
+            
+            u=0
+            for i in index:
+                seg = signal_channel[i - window_end_bin:i + window_end_bin]
+                
+                if (max(seg) > thresholdMinEmg): # Calcul les latences uniquement si il y a emg
+                    # boucle pour trouver l'occurence du premier bin qui est au dessus du threshold
+                    depart=0
+                    
+                    while (depart + window) < (len(seg)):
+                        seg2analysis = seg[depart:depart + window]
+                        seg2analysis = abs(seg2analysis)
+                        med = np.median(seg2analysis)
+                        std = np.std(seg2analysis)
+                        threshold = med + (tolerance*std)
+                        index0 = np.argwhere(seg2analysis>threshold)
+                        index1 = (index0 + depart) - window_end_bin
+                        index2 = index1/self.freq
 
+
+                        
+                        
+                        if (len(index2)>0 and index2[0] >0):
+                            niemeRep.append(u)
+                            indice.append((index2[0]).tolist())
+                            val_stimulation.append(val_courant)
+                            if verif_plot:
+                                plt.plot(seg)
+                                plt.plot(index0[0]+depart,seg[index0[0]+depart],"r+")
+                                plt.show()
+                            depart = len(seg) # pour sortir du while et n'avoir que la première valeure
+                            emg_amplitude.append(max(seg)-min(seg))
+                            
+                            
+                        depart += step
+                u+=1
+            self.val_courant = np.ravel(val_stimulation)
+            self.indice_latence = np.ravel(indice)
+            self.niemeRep = niemeRep
+            self.emg_amplitude = emg_amplitude
+            
+
+            
+    
     def latenceVsEmg(self, OnePulsePerEvent, showPlotLatence, showPlot):
         """calcul la latence en fonction de l'emg rectifié. Part du fichier importation mis sous la forme dictionnaire c_data
         """
-        
         
         for fichier in range(len(self.adi_out)): # Loop fichier par fichier : 1 fichier = 1 intensité dans ce cas ci
             val_courant = self.courant_val[fichier] # établi dans la fonction "loadDataFromDir"
@@ -777,15 +872,18 @@ class Psth:
             subplot_mxn =  self.findMxNsubplotGrid(len(index))
             u=0
             for i in index:
+                
                 seg = signal_channel[i:(i + window_end_bin)]
                 segSum = sum(seg * dx_time)*window_end_bin
                 
                 if (max(seg) > thresholdMinEmg): # Calcul les latences uniquement si il y a emg
-                    ind = math.floor(self.find_latency(seg, window_size=10, k=0.1))
+                    ind = self.find_latency(seg, window_size=12, k=0.1)
+                    
                     latency.append(ind / self.freq)
                     areaUnderCurveCompil.append(segSum)
                     val_stimulation.append(val_courant)
                     data.append([ind/self.freq, segSum, val_courant]) # [latence, AUC, val_courant]
+                    
 
                     if showPlotLatence:
                         u=u+1
@@ -1029,7 +1127,7 @@ class Psth:
 
     def sigmoidFit(self, xdata, ydata):
         ""
-        p0 = [max(ydata), np.median(xdata),1,min(ydata)] # les paramètres initiaux.[L, x0, k, b] : L le max de la courbe, b : offset en y, k scaling input, x0 :
+        p0 = [max(ydata), np.median(xdata),1,0] # les paramètres initiaux.[L, x0, k, b] : L le max de la courbe, b : offset en y, k scaling input, x0 :
         # la moitié du output
         try :
             popt, pcov = curve_fit(self.sigmoid, xdata, ydata, p0, method='lm')
@@ -1339,10 +1437,12 @@ class Psth:
             plt.ylabel("EMG max amplitude (V)")
             plt.xticks(fontsize=6)
             plt.yticks(fontsize=6)
+            self.dataCourbeRecru = [s_courant_val, etendu]
             etendu = []
             if (len(saveplotName) >= 1):
                 self.saveFigure(saveplotName)
         plt.show()
+        
     
     def peak2peakPulse(self, saveplotName = ""):
         # chan : psth array, borneTemp : borne à extraire peak amp
@@ -1428,37 +1528,6 @@ class Psth:
     def saveFigure(self, filename):
         pathExt = self.saveFigPathFolder + '/' + filename + ".svg"
         plt.savefig(pathExt)
-
-    def find_latency(self, data, window_size=10, k=0.08):
-        """
-        Detect breakpoints in a time series using a rolling diff approach.
-
-        Parameters:
-        - data: numpy array representing the time series
-        - window_size: size of the rolling window for calculating the diff
-        - k: factor for the adaptive threshold
-
-        Returns:
-        - above_threshold_indices: numpy array of indices where the rolling diff exceeds the threshold
-        """
-
-        # Calculate the difference for each point
-        diffs = np.diff(data)
-
-        # Apply a rolling mean to the differences
-        window = np.ones(window_size) / window_size
-        rolling_diffs = np.convolve(diffs, window, mode='valid')
-
-        # Determine the adaptive threshold
-        mean_rolling_diff = np.mean(rolling_diffs)
-        std_rolling_diff = np.std(rolling_diffs)
-        threshold = mean_rolling_diff + k * std_rolling_diff
-
-        # Identify points where the rolling diff exceeds the threshold
-        above_threshold_indices = np.where(np.abs(rolling_diffs) > threshold)[0] + window_size - 1
-        above_threshold_indices = above_threshold_indices[above_threshold_indices>30]
-
-        return above_threshold_indices[0]
     
     def calibrationForceVoltage(self,ChannelNumber,massValue):
         """Calibration base on weight add to the sensor. Must give the channel number -1 (from labchart) and 
@@ -1471,7 +1540,7 @@ class Psth:
         result = linregress(voltage_moy, massValue)
         self.calibrationSenseur = {"slope": result.slope, "intercept": result.intercept, "rvalue" : result.rvalue}
     
-    def find_latency(self, data, window_size=10, k=0.08):
+    def find_latency(self, data, window_size=5, k=0.01):
         """Detect breakpoints in a time series using a rolling diff approach.
     
         Parameters:

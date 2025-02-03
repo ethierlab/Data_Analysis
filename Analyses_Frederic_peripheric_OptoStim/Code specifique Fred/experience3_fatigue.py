@@ -16,12 +16,12 @@ import tkinter as tk
 from tkinter import filedialog
 
 if __name__ == "__main__":
-  
-    # 1 fichier à la fois :
+    # experience 3 : 10 mins, 5 hz, env. 30% de l'emg max, electrique et optogenetique doivent générés un emg équivalent
+    
 
     # Choix du bon capteur force 100g ou 500g :
 
-    capteur = 100
+    capteur = 500
     
     if capteur == 500:
         #--------CALIBRATION DU CAPTEUR FORCE-500Grammes---------------
@@ -41,22 +41,15 @@ if __name__ == "__main__":
         m = calibration.calibrationSenseur["slope"] # pente de la calibration force
         b = calibration.calibrationSenseur["intercept"] # ordonnée a l'origine de la calibration force
     
-    dir_path = "C:/Users/Maxime/Desktop/FredericD/279/opto_droit/exp3"
+    dir_path = "Z:/Projects/optogenetic_periph/255/opto_gauche/exp3"
     fatigue = P.Psth(dir_path, "opto") # fournir (dossier chemin ou "", type de stim : "elect" ou "opto" )
     fatigue.loadLabchartFromDir() # fournir (préfixe, sufixe) entourant la valeure de stim introduite dans fichier !!! doit changer nom de fonction si
     fatigue.calibrationSenseur = calibration.calibrationSenseur # calibre la force 
     fatigue.fromChannel2PsthIntraTrainExp3(1, 2, 5, 15, 30, True)
 
-    dir_path = "C:/Users/Maxime/Desktop/FredericD/279/elec_droit/exp3"
-    fatigue = P.Psth(dir_path, "elec") # fournir (dossier chemin ou "", type de stim : "elect" ou "opto" )
-    fatigue.loadLabchartFromDir() # fournir (préfixe, sufixe) entourant la valeure de stim introduite dans fichier !!! doit changer nom de fonction si
-    fatigue.calibrationSenseur = calibration.calibrationSenseur # calibre la force 
-    fatigue.fromChannel2PsthIntraTrainExp3(1, 2, 5, 15, 30, True)
-
-    dir_path = "C:/Users/Maxime/Desktop/FredericD/324/opto_droit/exp3"
-    fatigue = P.Psth(dir_path, "opto") # fournir (dossier chemin ou "", type de stim : "elect" ou "opto" )
-    fatigue.loadLabchartFromDir() # fournir (préfixe, sufixe) entourant la valeure de stim introduite dans fichier !!! doit changer nom de fonction si
-    fatigue.calibrationSenseur = calibration.calibrationSenseur # calibre la force 
-
-    fatigue.fromChannel2PsthIntraTrainExp3(1, 2, 5, 15, 30, True)
-    
+    # dir_path = "C:/Users/Maxime/Desktop/FredericD/291/electrique/exp2"
+    # fatigue = P.Psth(dir_path, "elec") # fournir (dossier chemin ou "", type de stim : "elect" ou "opto" )
+    # fatigue.loadLabchartFromDir() # fournir (préfixe, sufixe) entourant la valeure de stim introduite dans fichier !!! doit changer nom de fonction si
+    # fatigue.calibrationSenseur = calibration.calibrationSenseur # calibre la force 
+    # fatigue.fromChannel2PsthIntraTrainExp3(1, 2, 5, 15, 30, True)
+   

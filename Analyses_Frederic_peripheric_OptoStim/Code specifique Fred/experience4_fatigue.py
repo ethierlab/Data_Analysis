@@ -16,8 +16,8 @@ import tkinter as tk
 from tkinter import filedialog
 
 if __name__ == "__main__":
-  
-    # 1 fichier à la fois :
+    # Test fatigue intratrain un train de fréquence variable est répété 4 fois à chaque minutes
+    # 1 fichier = une fréquence, le dossier contient
 
     # Choix du bon capteur force 100g ou 500g :
 
