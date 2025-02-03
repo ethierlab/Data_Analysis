@@ -23,9 +23,10 @@ if __name__ == "__main__":
 
     capteur = 100
     
+    
     if capteur == 500:
         #--------CALIBRATION DU CAPTEUR FORCE-500Grammes---------------
-        dir_path = "Z:/Projects/optogenetic_periph/Calibration1/"
+        dir_path = "T:/Projects/optogenetic_periph/Calibration1/"
         calibration = P.Psth(dir_path, "elect") # fournir (dossier chemin ou "", type de stim : "elect" ou "opto" )
         calibration.loadLabchartFromDir()
         calibration.calibrationForceVoltage(2,[0, 50, 55, 60, 70, 90, 110, 130]) # basé sur calibration faite le 25 juin 24
@@ -34,7 +35,7 @@ if __name__ == "__main__":
     
     elif capteur == 100:
         #--------CALIBRATION DU CAPTEUR FORCE-100Grammes---------------
-        dir_path = "C:/Users/Maxime/Desktop/FredericD/Calibration2"
+        dir_path = "T:/Projects/optogenetic_periph/Calibration2"
         calibration = P.Psth(dir_path, "elect") # fournir (dossier chemin ou "", type de stim : "elect" ou "opto" )
         calibration.loadLabchartFromDir()
         calibration.calibrationForceVoltage(2,[0, 7.4, 8.6, 13.6, 23.6, 43.6, 63.6, 83.6, 103.6]) # basé sur calibration faite le 25 juin 24
@@ -42,8 +43,7 @@ if __name__ == "__main__":
         b = calibration.calibrationSenseur["intercept"] # ordonnée a l'origine de la calibration force
     
 
-
-    dir_path = "C:/Users/Maxime/Desktop/FredericD/324/opto_droit/exp5"
+    dir_path = "T:/Projects/optogenetic_periph/330/opto_droit/exp5"
     fatigue = P.Psth(dir_path, "opto") # fournir (dossier chemin ou "", type de stim : "elect" ou "opto" )
     fatigue.loadLabchartFromDir() # fournir (préfixe, sufixe) entourant la valeure de stim introduite dans fichier !!! doit changer nom de fonction si
     fatigue.calibrationSenseur = calibration.calibrationSenseur # calibre la force 
