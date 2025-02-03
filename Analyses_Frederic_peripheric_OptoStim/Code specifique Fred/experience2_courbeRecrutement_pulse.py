@@ -1,8 +1,3 @@
-<<<<<<< HEAD
-=======
-<<<<<<<< HEAD:Analyses_Frederic_peripheric_OptoStim/Code specifique Fred/experience1_courbeRecrutement_pulse.py
-========
->>>>>>> 2c3b4f518e0574d7b4175577fc718c16d4779ae9
 import psth_class as P
 import adi
 import numpy as np
@@ -103,12 +98,9 @@ def showRawData(psthObject, calibration, limiteSup):
 
 if __name__ == "__main__":
   
-<<<<<<< HEAD
+
     capteur = 100
-=======
-    capteur = 500
->>>>>>> 2c3b4f518e0574d7b4175577fc718c16d4779ae9
-    
+
     if capteur == 500:
         #--------CALIBRATION DU CAPTEUR FORCE-500Grammes---------------
         dir_path = "T:/Projects/optogenetic_periph/Calibration1/"
@@ -120,18 +112,16 @@ if __name__ == "__main__":
     
     elif capteur == 100:
         #--------CALIBRATION DU CAPTEUR FORCE-100Grammes---------------
-<<<<<<< HEAD
-        dir_path = "Z:/Projects/optogenetic_periph/Calibration2"
-=======
+
         dir_path = "T:/Projects/optogenetic_periph/Calibration2"
->>>>>>> 2c3b4f518e0574d7b4175577fc718c16d4779ae9
+
         calibration = P.Psth(dir_path, "elect") # fournir (dossier chemin ou "", type de stim : "elect" ou "opto" )
         calibration.loadLabchartFromDir()
         calibration.calibrationForceVoltage(2,[0, 7.4, 8.6, 13.6, 23.6, 43.6, 63.6, 83.6, 103.6]) # basé sur calibration faite le 25 juin 24
         m = calibration.calibrationSenseur["slope"] # pente de la calibration force
         b = calibration.calibrationSenseur["intercept"] # ordonnée a l'origine de la calibration force
     
-<<<<<<< HEAD
+
     dir_path = "Z:/Projects/optogenetic_periph/330/electrique/exp2"
     psth2 = P.Psth(dir_path, "elect") # fournir (dossier chemin ou "", type de stim : "elect" ou "opto" )
     psth2.loadDataFromDir("_","ms") # fournir (préfixe, sufixe) entourant la valeure de stim introduite dans fichier !!! doit changer nom de fonction si
@@ -152,11 +142,13 @@ if __name__ == "__main__":
     psth2 = P.Psth(dir_path, "opto") # fournir (dossier chemin ou "", type de stim : "elect" ou "opto" )
     psth2.loadDataFromDir("_","ms") # fournir (préfixe, sufixe) entourant la valeure de stim introduite dans fichier !!! doit changer nom de fonction si
     # seul fichier dans dossier (exp 2 et 3 non programmé)
-=======
+
+
     dir_path = "T:/Projects/optogenetic_periph/330/opto_droit/exp2"
     psth2 = P.Psth(dir_path, "opto") # fournir (dossier chemin ou "", type de stim : "elect" ou "opto" )
     psth2.loadDataFromDir("_","ms") # fournir (préfixe, sufixe) entourant la valeure de stim introduite dans fichier !!! changer si électrique ou optogenetique
->>>>>>> 2c3b4f518e0574d7b4175577fc718c16d4779ae9
+
+
     psth2.calibrationSenseur = calibration.calibrationSenseur
     psth2.fromChannel2Psth(0.01, 0.025, 1, 2, OnePulsePerEvent = True) # fournir : (t_inf, t_supp, canal signal, canal événement)
     psth2.showAllPsthPulse("") # fournir : ((rangée par, colonne de graphiques), le fichier où est sauvegardé la figure ou rien(""))
@@ -168,9 +160,3 @@ if __name__ == "__main__":
     psth2.fromChannel2PsthForce(0.05, 0.2, 3, 2, OnePulsePerEvent = True)
     psth2.showAllPsthPulse("")
     psth2.courbeRecrutementPulse([0, 0.2], "Force","")#
-<<<<<<< HEAD
-
-    
-=======
->>>>>>>> 2c3b4f518e0574d7b4175577fc718c16d4779ae9:Analyses_Frederic_peripheric_OptoStim/Code specifique Fred/experience2_courbeRecrutement_pulse.py
->>>>>>> 2c3b4f518e0574d7b4175577fc718c16d4779ae9
